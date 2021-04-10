@@ -1,0 +1,16 @@
+name: Econoblocks
+version: ${project.version}
+main: dev.flrp.econoblocks.Econoblocks
+api-version: 1.16
+depend: [ Vault ]
+authors: [ flrp ]
+description: A plugin that rewards players for mining blocks
+commands:
+  econoblocks:
+    description: Brings up a help menu.
+    default: true
+    usage: /econoblocks
+permissions:
+  econoblocks.admin:
+    description: Gives player access to admin commands.
+    default: op

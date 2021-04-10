@@ -1,0 +1,10 @@
+# Format - <amount>:(chance)
+# Setting a chance is completely optional. Leaving it blank will set it to 100%.
+blocks:
+  COAL_ORE: 10
+  IRON_ORE: 10
+  GOLD_ORE: 100:30
+  REDSTONE_ORE: 50:30
+  LAPIS_ORE: 50:30
+  DIAMOND_ORE: 100:20
+  EMERALD_ORE: 200:10
