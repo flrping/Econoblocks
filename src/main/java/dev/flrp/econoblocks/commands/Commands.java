@@ -20,7 +20,7 @@ public class Commands extends CommandBase {
 
     @Default
     public void defaultCommand(final CommandSender commandSender) {
-        commandSender.sendMessage(Locale.parse("&6&lEconoblocks &7Version 1.0.1 &8| &7By flrp <3"));
+        commandSender.sendMessage(Locale.parse("&6&lEconoblocks &7Version 1.0.2 &8| &7By flrp <3"));
         commandSender.sendMessage(Locale.parse("&f/econoblocks help &8- &7Displays this menu."));
         if(commandSender.hasPermission("econoblocks.admin")) {
             commandSender.sendMessage(Locale.parse("&f/econoblocks reload &8- &7Reloads the plugin."));

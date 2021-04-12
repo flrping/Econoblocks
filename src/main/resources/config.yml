@@ -1,4 +1,7 @@
 # Configuration of Econoblocks. For help, visit https://docs.axelli.net/
+checks:
+  # Should money be given if the tool has silk touch on it?
+  allow-silk-touch: false
 
 # Multipliers.
 # If any conditions are true, they will be considered towards the output amount.
