@@ -46,6 +46,7 @@ public class MessageManager {
                 title.setMarker(true);
                 playAnimation(title);
                 break;
+            default:
         }
     }
 
@@ -60,6 +61,7 @@ public class MessageManager {
             case BOUNCE:
                 new BounceAnimationTask(stand);
                 break;
+            default:
         }
     }
 
