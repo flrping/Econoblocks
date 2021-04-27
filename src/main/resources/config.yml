@@ -1,9 +1,30 @@
 # Configuration of Econoblocks. For help, visit https://docs.axelli.net/
+
+# Message handling.
+message:
+  # Should the plugin send messages about money gained?
+  enabled: true
+
+  # How should the plugin display messages when a player is given money?
+  # NOTE: Some options will only work with select versions. You can see which below.
+  # OPTIONS: CHAT, ACTION_BAR (1.12+), HOLOGRAM (1.12+)
+  message-type: CHAT
+
+  # HOLOGRAMS
+  # This will only work if you have holograms set as your type.
+  holograms:
+    # OPTIONS: STAY, FLOAT, BOUNCE
+    animation: STAY
+    # This option will effect animations.
+    # How long should the hologram stay? This is in seconds.
+    duration: 1
+
+# The checks system provides methods to help make sure players can't duplicate rewards.
 checks:
   # Should money be given if the tool has silk touch on it?
   allow-silk-touch: false
 
-# Multipliers.
+# Multiplier handling.
 # If any conditions are true, they will be considered towards the output amount.
 # Make sure to balance this properly if you use both. You can leave any category empty if you wish not to use it.
 multipliers:

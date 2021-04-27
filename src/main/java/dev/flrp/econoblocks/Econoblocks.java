@@ -6,8 +6,13 @@ import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.listeners.BlockListeners;
 import dev.flrp.econoblocks.managers.BlockManager;
 import dev.flrp.econoblocks.managers.EconomyManager;
+import dev.flrp.econoblocks.managers.MessageManager;
 import me.mattstudios.mf.base.CommandManager;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class Econoblocks extends JavaPlugin {
 
@@ -18,6 +23,9 @@ public final class Econoblocks extends JavaPlugin {
 
     private BlockManager blockManager;
     private EconomyManager economyManager;
+    private MessageManager messageManager;
+
+    private final List<Player> toggleList = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -60,6 +68,7 @@ public final class Econoblocks extends JavaPlugin {
     private void initiateClasses() {
         blockManager = new BlockManager(this);
         economyManager = new EconomyManager(this);
+        messageManager = new MessageManager(this);
     }
 
     private void initiateFiles() {
@@ -85,8 +94,17 @@ public final class Econoblocks extends JavaPlugin {
         return economyManager;
     }
 
+    public MessageManager getMessageManager() {
+        return messageManager;
+    }
+
     public static Econoblocks getInstance() {
         return instance;
+    }
+
+    // Temporary
+    public List<Player> getToggleList() {
+        return toggleList;
     }
 
 }

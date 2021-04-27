@@ -68,7 +68,10 @@ public class EconomyManager {
                 // Magic
                 String str = String.valueOf(BigDecimal.valueOf(value).setScale(2, RoundingMode.DOWN));
                 deposit(player, NumberUtils.toDouble(str));
-                player.sendMessage(Locale.parse(Locale.PREFIX + Locale.ECONOMY_GIVEN.replace("{0}", str)));
+
+                // Message
+                if(plugin.getConfig().getBoolean("message.enabled") && !plugin.getToggleList().contains(player))
+                    plugin.getMessageManager().sendMessage(player, block, NumberUtils.toDouble(str));
                 return;
             }
             // Couldn't apply money.
