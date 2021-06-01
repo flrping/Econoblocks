@@ -18,7 +18,7 @@ public class Commands extends CommandBase {
 
     @Default
     public void defaultCommand(final CommandSender commandSender) {
-        commandSender.sendMessage(Locale.parse("&6&lEconoblocks &7Version 1.1.0 &8| &7By flrp <3"));
+        commandSender.sendMessage(Locale.parse("&6&lEconoblocks &7Version 1.2.0 &8| &7By flrp <3"));
         commandSender.sendMessage(Locale.parse("&f/econoblocks help &8- &7Displays this menu."));
         commandSender.sendMessage(Locale.parse("&f/econoblocks toggle &8- &7Toggles the money message."));
         if(commandSender.hasPermission("econoblocks.admin")) {

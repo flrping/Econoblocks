@@ -4,7 +4,9 @@ import dev.flrp.econoblocks.commands.Commands;
 import dev.flrp.econoblocks.configuration.Configuration;
 import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.listeners.BlockListeners;
+import dev.flrp.econoblocks.listeners.ChunkListeners;
 import dev.flrp.econoblocks.managers.BlockManager;
+import dev.flrp.econoblocks.managers.DatabaseManager;
 import dev.flrp.econoblocks.managers.EconomyManager;
 import dev.flrp.econoblocks.managers.MessageManager;
 import me.mattstudios.mf.base.CommandManager;
@@ -24,6 +26,7 @@ public final class Econoblocks extends JavaPlugin {
     private BlockManager blockManager;
     private EconomyManager economyManager;
     private MessageManager messageManager;
+    private DatabaseManager databaseManager;
 
     private final List<Player> toggleList = new ArrayList<>();
 
@@ -41,8 +44,12 @@ public final class Econoblocks extends JavaPlugin {
         Locale.load();
         initiateClasses();
 
+        // Database things
+        databaseManager = new DatabaseManager(this);
+
         // Listeners
         getServer().getPluginManager().registerEvents(new BlockListeners(this), this);
+        getServer().getPluginManager().registerEvents(new ChunkListeners(this), this);
 
         // Commands
         CommandManager commandManager = new CommandManager(this);
@@ -63,6 +70,14 @@ public final class Econoblocks extends JavaPlugin {
         initiateClasses();
 
         System.out.println("[Econoblocks] Done!");
+    }
+
+    @Override
+    public void onDisable() {
+        if(getConfig().getBoolean("checks.storage.enabled")) {
+            databaseManager.save();
+            databaseManager.closeConnection();
+        }
     }
 
     private void initiateClasses() {
@@ -96,6 +111,10 @@ public final class Econoblocks extends JavaPlugin {
 
     public MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 
     public static Econoblocks getInstance() {

@@ -1,14 +1,16 @@
 package dev.flrp.econoblocks.listeners;
 
 import dev.flrp.econoblocks.Econoblocks;
-import dev.flrp.econoblocks.utils.Methods;
 import org.bukkit.block.Block;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 
 public class BlockListeners implements Listener {
 
@@ -22,12 +24,49 @@ public class BlockListeners implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
-        if(!plugin.getConfig().getBoolean("checks.allow-silk-touch")) {
-            if(Methods.itemInHand(player).containsEnchantment(Enchantment.SILK_TOUCH)) return;
-        }
         if(plugin.getBlockManager().getBlacklistedWorlds().contains(block.getWorld().getName())) return;
         if(!plugin.getBlockManager().getAmounts().containsKey(block.getType())) return;
+        if(plugin.getDatabaseManager().isCached(block.getLocation())) {
+            plugin.getDatabaseManager().removeBlockEntry(block.getLocation());
+            return;
+        }
         plugin.getEconomyManager().handleDeposit(player, block);
     }
 
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Block block = event.getBlock();
+        if(plugin.getBlockManager().getBlacklistedWorlds().contains(block.getWorld().getName())) return;
+        if(!plugin.getBlockManager().getAmounts().containsKey(block.getType())) return;
+        plugin.getDatabaseManager().addBlockEntry(block.getLocation());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        for(Block block : event.blockList()) {
+            if(plugin.getDatabaseManager().isCached(block.getLocation())) {
+                plugin.getDatabaseManager().removeBlockEntry(block.getLocation());
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        for(Block block : event.getBlocks()) {
+            if(plugin.getDatabaseManager().isCached(block.getLocation())) {
+                plugin.getDatabaseManager().removeBlockEntry(block.getLocation());
+                plugin.getDatabaseManager().addBlockEntry(block.getLocation().add(event.getDirection().getDirection()));
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        for(Block block : event.getBlocks()) {
+            if(plugin.getDatabaseManager().isCached(block.getLocation())) {
+                plugin.getDatabaseManager().removeBlockEntry(block.getLocation());
+                plugin.getDatabaseManager().addBlockEntry(block.getLocation().add(event.getDirection().getDirection()));
+            }
+        }
+    }
 }

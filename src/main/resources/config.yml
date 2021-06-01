@@ -21,8 +21,14 @@ message:
 
 # The checks system provides methods to help make sure players can't duplicate rewards.
 checks:
-  # Should money be given if the tool has silk touch on it?
-  allow-silk-touch: false
+  # This option uses SQLite. SQL support will come later.
+  storage:
+    # Should blocks be stored in a database? This will keep all block data across restarts. Setting this option to false will still keep track of blocks,
+    # but they will NOT be saved across restarts.
+    enabled: true
+    # How long will blocks be stored for until they expire? This will help clear up space in the database.
+    # To disable this, just set it to 0. This is in days.
+    expiry: 3
 
 # Multiplier handling.
 # If any conditions are true, they will be considered towards the output amount.
