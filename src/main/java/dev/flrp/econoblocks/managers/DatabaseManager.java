@@ -71,7 +71,7 @@ public class DatabaseManager {
             }
             rs.close();
             statement.close();
-            System.out.println("[Econoblocks] Loaded " + rawCache.size() + " blocks");
+            System.out.println("[Econoblocks] Loaded " + rawCache.size() + " stored blocks from the database.");
 
         } catch (ClassNotFoundException e) {
             System.out.println("[Econoblocks] Could not find SQLite, blocks will not be stored on restart.");

@@ -9,7 +9,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -17,6 +16,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.UUID;
 
 public class EconomyManager {
 
@@ -24,7 +24,7 @@ public class EconomyManager {
 
     private static Economy eco = null;
     private final HashMap<Material, Double> tools = new HashMap<>();
-    private final HashMap<World, Double> worlds = new HashMap<>();
+    private final HashMap<UUID, Double> worlds = new HashMap<>();
 
     public EconomyManager(Econoblocks plugin) {
         this.plugin = plugin;
@@ -33,14 +33,24 @@ public class EconomyManager {
             eco = rsp.getProvider();
         }
         for(String entry : plugin.getConfig().getStringList("multipliers.tools")) {
-            Material material = Material.getMaterial(entry.substring(0, entry.indexOf(' ')));
-            double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
-            tools.put(material, multiplier);
+            try {
+                Material material = Material.getMaterial(entry.substring(0, entry.indexOf(' ')));
+                double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
+                tools.put(material, multiplier);
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println("[Econoblocks] Invalid formatting (" + entry + "), skipping.");
+            }
         }
         for(String entry : plugin.getConfig().getStringList("multipliers.worlds")) {
-            World world = Bukkit.getWorld(entry.substring(0, entry.indexOf(' ')));
-            double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
-            worlds.put(world, multiplier);
+            try {
+                UUID uuid = Bukkit.getWorld(entry.substring(0, entry.indexOf(' '))).getUID();
+                double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
+                worlds.put(uuid, multiplier);
+            } catch (IndexOutOfBoundsException e) {
+                System.out.println("[Econoblocks] Invalid formatting (" + entry + "), skipping.");
+            } catch (NullPointerException e) {
+                System.out.println("[Econoblocks] World cannot be found (" + entry + "), skipping.");
+            }
         }
     }
 
@@ -49,13 +59,13 @@ public class EconomyManager {
             if(hasAccount(player)) {
                 // Variables
                 Material tool = Methods.itemInHand(player).getType();
+                UUID uuid = block.getWorld().getUID();
                 double value = plugin.getBlockManager().getAmount(block.getType());
-                World world = block.getWorld();
 
                 // Checks
                 if(plugin.getBlockManager().getChances().containsKey(block.getType()) && Math.random() * 100 > plugin.getBlockManager().getChance(block.getType())) return;
                 if(tools.containsKey(tool)) value = value * tools.get(tool);
-                if(worlds.containsKey(world)) value = value * worlds.get(world);
+                if(worlds.containsKey(uuid)) value = value * worlds.get(uuid);
 
                 // Event
                 BlockGiveEconomyEvent blockGiveEconomyEvent = new BlockGiveEconomyEvent(value, block);
@@ -92,6 +102,6 @@ public class EconomyManager {
 
     public HashMap<Material, Double> getToolMultipliers() { return tools; }
 
-    public HashMap<World, Double> getWorldMultipliers() { return worlds; }
+    public HashMap<UUID, Double> getWorldMultipliers() { return worlds; }
 
 }
