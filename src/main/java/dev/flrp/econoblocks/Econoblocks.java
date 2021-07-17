@@ -10,6 +10,7 @@ import dev.flrp.econoblocks.managers.DatabaseManager;
 import dev.flrp.econoblocks.managers.EconomyManager;
 import dev.flrp.econoblocks.managers.MessageManager;
 import me.mattstudios.mf.base.CommandManager;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -34,6 +35,9 @@ public final class Econoblocks extends JavaPlugin {
     public void onEnable() {
         System.out.println("[Econoblocks] Starting...");
         instance = this;
+
+        // bStats
+        Metrics metrics = new Metrics(this, 12071);
 
         // Files
         getConfig().options().copyDefaults();

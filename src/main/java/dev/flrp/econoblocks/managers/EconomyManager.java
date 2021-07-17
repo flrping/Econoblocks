@@ -56,44 +56,36 @@ public class EconomyManager {
 
     public void handleDeposit(Player player, Block block) {
         try {
-            if(hasAccount(player)) {
-                // Variables
-                Material tool = Methods.itemInHand(player).getType();
-                UUID uuid = block.getWorld().getUID();
-                double value = plugin.getBlockManager().getAmount(block.getType());
+            if(!eco.hasAccount(player)) eco.createPlayerAccount(player);
 
-                // Checks
-                if(plugin.getBlockManager().getChances().containsKey(block.getType()) && Math.random() * 100 > plugin.getBlockManager().getChance(block.getType())) return;
-                if(tools.containsKey(tool)) value = value * tools.get(tool);
-                if(worlds.containsKey(uuid)) value = value * worlds.get(uuid);
+            // Variables
+            Material tool = Methods.itemInHand(player).getType();
+            UUID uuid = block.getWorld().getUID();
+            double value = plugin.getBlockManager().getAmount(block.getType());
 
-                // Event
-                BlockGiveEconomyEvent blockGiveEconomyEvent = new BlockGiveEconomyEvent(value, block);
-                Bukkit.getPluginManager().callEvent(blockGiveEconomyEvent);
-                if(blockGiveEconomyEvent.isCancelled()) {
-                    blockGiveEconomyEvent.setCancelled(true);
-                    return;
-                }
+            // Checks
+            if(plugin.getBlockManager().getChances().containsKey(block.getType()) && Math.random() * 100 > plugin.getBlockManager().getChance(block.getType())) return;
+            if(tools.containsKey(tool)) value = value * tools.get(tool);
+            if(worlds.containsKey(uuid)) value = value * worlds.get(uuid);
 
-                // Magic
-                String str = String.valueOf(BigDecimal.valueOf(value).setScale(2, RoundingMode.DOWN));
-                deposit(player, NumberUtils.toDouble(str));
-
-                // Message
-                if(plugin.getConfig().getBoolean("message.enabled") && !plugin.getToggleList().contains(player))
-                    plugin.getMessageManager().sendMessage(player, block, NumberUtils.toDouble(str));
+            // Event
+            BlockGiveEconomyEvent blockGiveEconomyEvent = new BlockGiveEconomyEvent(value, block);
+            Bukkit.getPluginManager().callEvent(blockGiveEconomyEvent);
+            if(blockGiveEconomyEvent.isCancelled()) {
+                blockGiveEconomyEvent.setCancelled(true);
                 return;
             }
-            // Couldn't apply money.
-            player.sendMessage(Locale.parse(Locale.PREFIX + Locale.ECONOMY_FAILED));
+
+            // Magic
+            String str = String.valueOf(BigDecimal.valueOf(value).setScale(2, RoundingMode.DOWN));
+            deposit(player, NumberUtils.toDouble(str));
+
+            // Message
+            if(plugin.getConfig().getBoolean("message.enabled") && !plugin.getToggleList().contains(player))
+                plugin.getMessageManager().sendMessage(player, block, NumberUtils.toDouble(str));
         } catch(Exception e) {
-            // This won't always be the reason, but most of the time it will be.
             player.sendMessage(Locale.parse(Locale.PREFIX + Locale.ECONOMY_MAX));
         }
-    }
-
-    public boolean hasAccount(OfflinePlayer player) {
-        return eco.hasAccount(player);
     }
 
     public boolean deposit(OfflinePlayer player, double amount) {
