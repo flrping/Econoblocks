@@ -54,11 +54,15 @@ public class DatabaseManager {
             }
 
             // Loading entries
-            Statement statement = connection.createStatement();
             String sql = "SELECT * FROM blocks;";
+            Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery(sql);
             while(rs.next()) {
+                // Making the location.
                 Location location = new Location(Bukkit.getWorld(UUID.fromString(rs.getString("w"))), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
+                // Checking if valid, mainly for servers with resource worlds.
+                if(location.getWorld() == null) continue;
+                // Find the location of the chunk and add to caches.
                 ChunkLocation chunkLocation = new ChunkLocation(location);
                 if(chunkCache.containsKey(chunkLocation)) {
                     chunkCache.get(chunkLocation).add(location);
