@@ -31,15 +31,29 @@ checks:
     expiry: 3
 
 # Multiplier handling.
+# Here you can create specific multipliers for the ranks you have on the server.
+# The group names will automatically try to find the rank with the same name, so there's no need for permissions.
 # If any conditions are true, they will be considered towards the output amount.
-# Make sure to balance this properly if you use both. You can leave any category empty with [] if you wish not to use it.
+# Make sure to balance this properly if you use multipliers. You can leave any category empty with [] if you wish not to use it.
 multipliers:
-  tools:
-    - IRON_PICKAXE 1.05
-    - GOLDEN_PICKAXE 1.1
-    - DIAMOND_PICKAXE 1.2
-  worlds: []
+  # Attaches to the rank "example" - if there is one.
+  example:
+    # Specific tool multipliers.
+    tools:
+      - IRON_PICKAXE 1.05
+      - GOLDEN_PICKAXE 1.1
+      - DIAMOND_PICKAXE 1.2
+    # The world the block was mined in.
+    worlds:
+      - real_world
+  # More examples...
+  coal:
+    tools:
+      - IRON_PICKAXE 1.1
+  diamond:
+    tools:
+      - IRON_PICKAXE 1.15
 
-# A list of worlds where money wont be given.
+# A list of worlds where money won't be given.
 world-blacklist:
   - world2

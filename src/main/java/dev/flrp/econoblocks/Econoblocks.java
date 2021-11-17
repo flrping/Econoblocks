@@ -5,10 +5,7 @@ import dev.flrp.econoblocks.configuration.Configuration;
 import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.listeners.BlockListeners;
 import dev.flrp.econoblocks.listeners.ChunkListeners;
-import dev.flrp.econoblocks.managers.BlockManager;
-import dev.flrp.econoblocks.managers.DatabaseManager;
-import dev.flrp.econoblocks.managers.EconomyManager;
-import dev.flrp.econoblocks.managers.MessageManager;
+import dev.flrp.econoblocks.managers.*;
 import me.mattstudios.mf.base.CommandManager;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.entity.Player;
@@ -28,13 +25,19 @@ public final class Econoblocks extends JavaPlugin {
     private EconomyManager economyManager;
     private MessageManager messageManager;
     private DatabaseManager databaseManager;
+    private HookManager hookManager;
 
     private final List<Player> toggleList = new ArrayList<>();
 
     @Override
     public void onEnable() {
-        System.out.println("[Econoblocks] Starting...");
         instance = this;
+
+        Locale.log("&8--------------");
+        Locale.log("&eEconoblocks &rby flrp &8(&ev1.3.0&8)");
+        Locale.log("Consider &cPatreon &rto support me for keeping these plugins free.");
+        Locale.log("&8--------------");
+        Locale.log("&eStarting...");
 
         // bStats
         Metrics metrics = new Metrics(this, 12071);
@@ -60,11 +63,11 @@ public final class Econoblocks extends JavaPlugin {
         commandManager.register(new Commands(this));
         commandManager.getMessageHandler().register("cmd.no.permission", sender -> sender.sendMessage(Locale.parse(Locale.COMMAND_DENIED)));
 
-        System.out.println("[Econoblocks] Done!");
+        Locale.log("&eDone!");
     }
 
     public void onReload() {
-        System.out.println("[Econoblocks] Reloading...");
+        Locale.log("&eReloading...");
         // Files
         reloadConfig();
         initiateFiles();
@@ -73,7 +76,7 @@ public final class Econoblocks extends JavaPlugin {
         Locale.load();
         initiateClasses();
 
-        System.out.println("[Econoblocks] Done!");
+        Locale.log("&eDone!");
     }
 
     @Override
@@ -88,6 +91,7 @@ public final class Econoblocks extends JavaPlugin {
         blockManager = new BlockManager(this);
         economyManager = new EconomyManager(this);
         messageManager = new MessageManager(this);
+        hookManager = new HookManager(this);
     }
 
     private void initiateFiles() {
@@ -119,6 +123,10 @@ public final class Econoblocks extends JavaPlugin {
 
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public HookManager getHookManager() {
+        return hookManager;
     }
 
     public static Econoblocks getInstance() {

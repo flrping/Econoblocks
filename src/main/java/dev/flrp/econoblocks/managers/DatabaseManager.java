@@ -1,6 +1,7 @@
 package dev.flrp.econoblocks.managers;
 
 import dev.flrp.econoblocks.Econoblocks;
+import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.utils.ChunkLocation;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -9,7 +10,10 @@ import org.bukkit.Location;
 import java.io.File;
 import java.io.IOException;
 import java.sql.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class DatabaseManager {
 
@@ -25,7 +29,7 @@ public class DatabaseManager {
 
             // Finding sqlite
             Class.forName("org.sqlite.JDBC");
-            System.out.println("[Econoblocks] Found SQLite. Unlocking database usage if applicable.");
+            Locale.log("&eSQLite &rfound. Unlocking database usage if applicable.");
 
             // Create connection
             File databaseFile = new File(plugin.getDataFolder(), "database.db");
@@ -75,14 +79,14 @@ public class DatabaseManager {
             }
             rs.close();
             statement.close();
-            System.out.println("[Econoblocks] Loaded " + rawCache.size() + " stored blocks from the database.");
+            Locale.log("Loaded &e" + rawCache.size() + " &rstored blocks from the database.");
 
         } catch (ClassNotFoundException e) {
-            System.out.println("[Econoblocks] Could not find SQLite, blocks will not be stored on restart.");
+            Locale.log("&cCould not find SQLite, blocks will not be stored on restart.");
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("[Econoblocks] Could not create the database file.");
+            Locale.log("&cCould not create the database file.");
         }
     }
 
@@ -155,7 +159,7 @@ public class DatabaseManager {
                         "('" + location.getWorld().getUID() + "', " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ");";
                 statement.executeUpdate(sql);
             }
-            System.out.println("[Econoblocks] Database saved.");
+            Locale.log("&eDatabase saved.");
             statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
