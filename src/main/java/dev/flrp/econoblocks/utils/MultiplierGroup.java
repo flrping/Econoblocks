@@ -14,16 +14,26 @@ public class MultiplierGroup {
     private final String identifier;
     private final HashMap<Material, Double> materials = new HashMap<>();
     private final HashMap<UUID, Double> worlds = new HashMap<>();
+    private final HashMap<Material, Double> blocks = new HashMap<>();
 
     public MultiplierGroup(String identifier) {
         this.identifier = identifier;
+        for(String entry : Econoblocks.getInstance().getConfig().getStringList("multipliers." + identifier + ".blocks")) {
+            try {
+                Material material = Material.getMaterial(entry.substring(0, entry.indexOf(' ')));
+                double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
+                blocks.put(material, multiplier);
+            } catch (IndexOutOfBoundsException e) {
+                Locale.log("&cInvalid entry (" + entry +"), skipping.");
+            }
+        }
         for(String entry : Econoblocks.getInstance().getConfig().getStringList("multipliers." + identifier + ".tools")) {
             try {
                 Material material = Material.getMaterial(entry.substring(0, entry.indexOf(' ')));
                 double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
                 materials.put(material, multiplier);
             } catch (IndexOutOfBoundsException e) {
-                Locale.log("&cInvalid formatting (" + entry + "), skipping.");
+                Locale.log("&cInvalid entry (" + entry + "), skipping.");
             }
         }
         for(String entry : Econoblocks.getInstance().getConfig().getStringList("multipliers." + identifier + ".worlds")) {
@@ -32,7 +42,7 @@ public class MultiplierGroup {
                 double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
                 worlds.put(uuid, multiplier);
             } catch (IndexOutOfBoundsException e) {
-                Locale.log("&cInvalid formatting (" + entry + "), skipping.");
+                Locale.log("&cInvalid entry (" + entry + "), skipping.");
             } catch (NullPointerException e) {
                 Locale.log("&cWorld cannot be found (" + entry + "), skipping.");
             }
@@ -40,14 +50,30 @@ public class MultiplierGroup {
 
     }
 
+    /*
+     * Returns the identifier for the group.
+     */
     public String getIdentifier() {
         return identifier;
     }
 
+    /*
+     * Returns the list used for block multipliers.
+     */
+    public HashMap<Material, Double> getBlocks() {
+        return blocks;
+    }
+
+    /*
+     * Returns the list used for tool multipliers.
+     */
     public HashMap<Material, Double> getMaterials() {
         return materials;
     }
 
+    /*
+     * Returns the list used for world multipliers.
+     */
     public HashMap<UUID, Double> getWorlds() {
         return worlds;
     }

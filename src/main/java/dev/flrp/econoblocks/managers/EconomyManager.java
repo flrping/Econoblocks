@@ -42,10 +42,11 @@ public class EconomyManager {
             if(plugin.getBlockManager().getChances().containsKey(block.getType()) && Math.random() * 100 > plugin.getBlockManager().getChance(block.getType())) return;
 
             // Groups
-            String primary = VaultHook.getPrimaryGroup(player);
+            String primary = VaultHook.hasGroupSupport() ? VaultHook.getPrimaryGroup(player) : null;
             if(primary != null && groups.containsKey(primary)) {
                 MultiplierGroup group = groups.get(primary);
                 // Checks
+                if(group.getBlocks().containsKey(block.getType())) amount = amount * group.getBlocks().get(block.getType());
                 if(group.getMaterials().containsKey(tool)) amount = amount * group.getMaterials().get(tool);
                 if(group.getWorlds().containsKey(uuid)) amount = amount * group.getWorlds().get(uuid);
             }

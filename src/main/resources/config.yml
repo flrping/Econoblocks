@@ -15,11 +15,11 @@ message:
   holograms:
     # OPTIONS: STAY, FLOAT, BOUNCE
     animation: STAY
-    # This option will effect animations.
+    # This option will affect animations.
     # How long should the hologram stay? This is in seconds.
     duration: 1
 
-# The checks system provides methods to help make sure players can't duplicate rewards.
+# The check system provides methods to help make sure players can't duplicate rewards.
 checks:
   # This option uses SQLite. SQL support will come later.
   storage:
@@ -38,6 +38,10 @@ checks:
 multipliers:
   # Attaches to the rank "example" - if there is one.
   example:
+    # Specific block multipliers.
+    blocks:
+      - COAL_ORE 1.5
+      - IRON_ORE 1.5
     # Specific tool multipliers.
     tools:
       - IRON_PICKAXE 1.05
@@ -51,6 +55,8 @@ multipliers:
     tools:
       - IRON_PICKAXE 1.1
   diamond:
+    blocks:
+      - DIAMOND_ORE 1.5
     tools:
       - IRON_PICKAXE 1.15
 

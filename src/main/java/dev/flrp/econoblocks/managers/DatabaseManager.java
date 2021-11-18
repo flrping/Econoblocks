@@ -159,7 +159,7 @@ public class DatabaseManager {
                         "('" + location.getWorld().getUID() + "', " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ");";
                 statement.executeUpdate(sql);
             }
-            Locale.log("&eDatabase saved.");
+            Locale.log("Database saved.");
             statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
