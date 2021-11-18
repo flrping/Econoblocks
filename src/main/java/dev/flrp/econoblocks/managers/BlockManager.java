@@ -1,6 +1,7 @@
 package dev.flrp.econoblocks.managers;
 
 import dev.flrp.econoblocks.Econoblocks;
+import dev.flrp.econoblocks.configuration.Locale;
 import org.bukkit.Material;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class BlockManager {
         for(Map.Entry<String, Object> entry : plugin.getBlocks().getConfiguration().getConfigurationSection("blocks").getValues(false).entrySet()) {
             Material material = Material.matchMaterial(entry.getKey());
             if(material == null) {
-                System.out.println("[Econoblocks] Invalid material found (" + entry.getKey() +"), skipping.");
+                Locale.log("&cInvalid material found (" + entry.getKey() +"), skipping.");
                 continue;
             }
             String value = String.valueOf(entry.getValue());

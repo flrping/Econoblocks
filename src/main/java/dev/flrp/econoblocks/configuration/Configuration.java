@@ -32,7 +32,7 @@ public class Configuration {
         try {
             fileConfig.save(file);
         } catch (IOException e) {
-            System.out.print("[Econoblocks] failed to save " + name + ".yml");
+            Locale.log("&cfailed to save " + name + ".yml");
         }
     }
 
