@@ -1,6 +1,7 @@
 package dev.flrp.econoblocks.listeners;
 
 import dev.flrp.econoblocks.Econoblocks;
+import org.bukkit.GameMode;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,6 +25,7 @@ public class BlockListeners implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
+        if(!plugin.getConfig().getBoolean("gamemode.creative-rewards") && player.getGameMode() == GameMode.CREATIVE) return;
         if(plugin.getBlockManager().getBlacklistedWorlds().contains(block.getWorld().getName())) return;
         if(!plugin.getBlockManager().getAmounts().containsKey(block.getType())) return;
         if(plugin.getDatabaseManager().isCached(block.getLocation())) {

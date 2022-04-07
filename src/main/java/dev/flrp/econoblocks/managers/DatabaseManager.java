@@ -2,10 +2,12 @@ package dev.flrp.econoblocks.managers;
 
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.configuration.Locale;
-import dev.flrp.econoblocks.utils.ChunkLocation;
+import dev.flrp.econoblocks.utils.chunk.ChunkLocation;
+import dev.flrp.econoblocks.utils.multiplier.MultiplierProfile;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,19 +19,22 @@ import java.util.UUID;
 
 public class DatabaseManager {
 
+    private final Econoblocks plugin;
     private Connection connection;
-    private final Set<Location> cache = new HashSet<>();
-    private final Set<Location> rawCache = new HashSet<>();
-    private final Set<Location> removalCache = new HashSet<>();
+
+    // Chunks
+    private final Set<Location> blockCache = new HashSet<>(), rawCache = new HashSet<>();
     private final HashMap<ChunkLocation, Set<Location>> chunkCache = new HashMap<>();
 
-    public DatabaseManager(Econoblocks plugin) {
-        try {
-            if(!plugin.getConfig().getBoolean("checks.storage.enabled")) return;
+    // Multipliers
+    private final HashMap<UUID, MultiplierProfile> playerCache = new HashMap<>();
 
+    public DatabaseManager(Econoblocks plugin) {
+        this.plugin = plugin;
+        try {
             // Finding sqlite
             Class.forName("org.sqlite.JDBC");
-            Locale.log("&eSQLite &rfound. Unlocking database usage if applicable.");
+            Locale.log("&eSQLite &rfound. Unlocking database usage.");
 
             // Create connection
             File databaseFile = new File(plugin.getDataFolder(), "database.db");
@@ -38,16 +43,60 @@ public class DatabaseManager {
             }
             connection = DriverManager.getConnection("jdbc:sqlite:" + databaseFile);
 
-            // Checking if table exists
-            Statement tableStatement = connection.createStatement();
-            String createTable = "CREATE TABLE IF NOT EXISTS blocks (" +
+            // Specific multiplier table
+            Statement multiplierTableStatement = connection.createStatement();
+            String createMultiplierTable = "CREATE TABLE IF NOT EXISTS multipliers (" +
+                    "user varchar(36) NOT NULL," +
+                    "context varchar NOT NULL," +
+                    "multiplier double NOT NULL," +
+                    "type varchar CHECK( type IN ('MATERIAL', 'TOOL', 'WORLD')) NOT NULL)";
+            multiplierTableStatement.executeUpdate(createMultiplierTable);
+            multiplierTableStatement.close();
+
+            // Handling specific multipliers
+            String MultiplierSql = "SELECT * FROM multipliers";
+            Statement multiplierStatement = connection.createStatement();
+            ResultSet  multiplierResultSet = multiplierStatement.executeQuery(MultiplierSql);
+            while (multiplierResultSet.next()) {
+                UUID uuid = UUID.fromString(multiplierResultSet.getString("user"));
+                MultiplierProfile mp = new MultiplierProfile(uuid);
+                playerCache.put(uuid, mp);
+
+                switch (multiplierResultSet.getString("type")) {
+                    case "MATERIAL":
+                        mp.getMaterials().put(Material.matchMaterial(multiplierResultSet.getString("context")),
+                                multiplierResultSet.getDouble("multiplier"));
+                        break;
+                    case "TOOL":
+                        mp.getTools().put(Material.matchMaterial(multiplierResultSet.getString("context")),
+                                multiplierResultSet.getDouble("multiplier"));
+                        break;
+                    case "WORLD":
+                        mp.getWorlds().put(UUID.fromString(multiplierResultSet.getString("context")),
+                                multiplierResultSet.getDouble("multiplier"));
+                        break;
+                    default:
+                }
+            }
+            multiplierStatement.close();
+            multiplierResultSet.close();
+
+            Locale.log("Loaded &e" + playerCache.size() + " &rmultiplier profiles from the database.");
+
+            // Stopping if owner wishes not to store block data.
+            if(!plugin.getConfig().getBoolean("checks.storage.enabled")) return;
+
+            // LOADING PLACED BLOCKS
+            // Block Table
+            Statement blockTableStatement = connection.createStatement();
+            String createBlockTable = "CREATE TABLE IF NOT EXISTS blocks (" +
                     "w varchar(36) NOT NULL," +
                     "x int NOT NULL," +
                     "y int NOT NULL," +
                     "z int NOT NULL," +
                     "d date NOT NULL default(current_date))";
-            tableStatement.executeUpdate(createTable);
-            tableStatement.close();
+            blockTableStatement.executeUpdate(createBlockTable);
+            blockTableStatement.close();
 
             // Deleting entries
             if(plugin.getConfig().getInt("checks.storage.expiry") > 0) {
@@ -82,7 +131,7 @@ public class DatabaseManager {
             Locale.log("Loaded &e" + rawCache.size() + " &rstored blocks from the database.");
 
         } catch (ClassNotFoundException e) {
-            Locale.log("&cCould not find SQLite, blocks will not be stored on restart.");
+            Locale.log("&cCould not find SQLite, some features will not work.");
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -90,16 +139,13 @@ public class DatabaseManager {
         }
     }
 
+    // Block / Chunk
     public Connection getConnection() {
         return connection;
     }
 
-    public Set<Location> getCache() {
-        return cache;
-    }
-
-    public Set<Location> getRemovalCache() {
-        return removalCache;
+    public Set<Location> getBlockCache() {
+        return blockCache;
     }
 
     public HashMap<ChunkLocation, Set<Location>> getChunkCache() {
@@ -107,20 +153,20 @@ public class DatabaseManager {
     }
 
     public boolean isCached(Location location) {
-        return cache.contains(location);
+        return blockCache.contains(location);
     }
 
     public void addChunkEntries(Chunk chunk) {
         Set<Location> locations = chunkCache.get(new ChunkLocation(chunk));
         if(locations != null) {
-            cache.addAll(locations);
+            blockCache.addAll(locations);
         }
     }
 
     public void removeChunkEntries(Chunk chunk) {
         Set<Location> locations = chunkCache.get(new ChunkLocation(chunk));
         if(locations != null) {
-            cache.removeAll(locations);
+            blockCache.removeAll(locations);
         }
     }
 
@@ -134,36 +180,103 @@ public class DatabaseManager {
             blocks.add(location);
             chunkCache.put(chunkLocation, blocks);
         }
-        cache.add(location);
+        blockCache.add(location);
+        if(plugin.getConfig().getBoolean("checks.storage.enabled"))
+            query("INSERT INTO blocks (w,x,y,z) VALUES " + "('" + location.getWorld().getUID() + "', " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ");");
     }
 
     public void removeBlockEntry(Location location) {
         Set<Location> locations = chunkCache.get(new ChunkLocation(location));
         if(locations != null) {
-            cache.remove(location);
+            blockCache.remove(location);
             locations.remove(location);
-            removalCache.add(location);
+            if(plugin.getConfig().getBoolean("checks.storage.enabled"))
+                query("DELETE FROM blocks WHERE " + "w='" + location.getWorld().getUID() + "' AND x=" + location.getX() + " AND y=" + location.getY() + " AND z=" + location.getZ() + ";");
         }
     }
 
-    public void save() {
-        try {
-            Statement statement = connection.createStatement();
-            for(Location location : removalCache) {
-                String sql = "DELETE FROM blocks WHERE " + "w='" + location.getWorld().getUID() + "' AND x=" + location.getX() + " AND y=" + location.getY() + " AND z=" + location.getZ() + ";";
-                statement.executeUpdate(sql);
-            }
-            for(Location location : cache) {
-                if(rawCache.contains(location)) continue;
-                String sql = "INSERT INTO blocks (w,x,y,z) VALUES " +
-                        "('" + location.getWorld().getUID() + "', " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ");";
-                statement.executeUpdate(sql);
-            }
-            Locale.log("Database saved.");
-            statement.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+    // Player
+    public HashMap<UUID, MultiplierProfile> getPlayerCache() {
+        return playerCache;
+    }
+
+    public boolean isCached(UUID uuid) {
+        return playerCache.containsKey(uuid);
+    }
+
+    public MultiplierProfile createMultiplierProfile(UUID uuid) {
+        MultiplierProfile multiplierProfile = new MultiplierProfile(uuid);
+        playerCache.put(uuid, multiplierProfile);
+        return multiplierProfile;
+    }
+
+    public MultiplierProfile getMultiplierProfile(UUID uuid) {
+        if(playerCache.containsKey(uuid)) {
+            return playerCache.get(uuid);
         }
+        MultiplierProfile multiplierProfile = new MultiplierProfile(uuid);
+        playerCache.put(uuid, multiplierProfile);
+        return multiplierProfile;
+    }
+
+    private void addMultiplier(UUID uuid, String context, String type, double multiplier) {
+        query("INSERT INTO multipliers (user,context,multiplier,type) VALUES ('" + uuid + "', '" + context + "', " + multiplier + " ,'" + type + "');");
+    }
+
+    public void addBlockMultiplier(UUID uuid, Material material, double multiplier) {
+        addMultiplier(uuid, material.name(), "MATERIAL", multiplier);
+    }
+
+    public void addToolMultiplier(UUID uuid, Material material, double multiplier) {
+        addMultiplier(uuid, material.name(), "TOOL", multiplier);
+    }
+
+    public void addWorldMultiplier(UUID uuid, UUID world, double multiplier) {
+        addMultiplier(uuid, world.toString(), "WORLD", multiplier);
+    }
+
+    private void updateMultiplier(UUID uuid, String context, String type, double multiplier) {
+        query("UPDATE multipliers SET multiplier=" + multiplier + " WHERE user='" + uuid + "' AND context='" + context + "' AND type=" + type + "';");
+    }
+
+    public void updateBlockMultiplier(UUID uuid, Material material, double multiplier) {
+        updateMultiplier(uuid, material.name(), "MATERIAL", multiplier);
+    }
+
+    public void updateToolMultiplier(UUID uuid, Material material, double multiplier) {
+        updateMultiplier(uuid, material.name(), "TOOL", multiplier);
+    }
+
+    public void updateWorldMultiplier(UUID uuid, UUID world, double multiplier) {
+        updateMultiplier(uuid, world.toString(), "WORLD", multiplier);
+    }
+
+    private void removeMultiplier(UUID uuid, String context, String type) {
+        query("DELETE FROM multipliers WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
+    }
+
+    public void removeBlockMultiplier(UUID uuid, Material material) {
+        removeMultiplier(uuid, material.name(), "MATERIAL");
+    }
+
+    public void removeToolMultiplier(UUID uuid, Material material) {
+        removeMultiplier(uuid, material.name(), "TOOL");
+    }
+
+    public void removeWorldMultiplier(UUID uuid, UUID world) {
+        removeMultiplier(uuid, world.toString(), "WORLD");
+    }
+
+    private void query(String sql) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                Statement statement = connection.createStatement();
+                statement.executeUpdate(sql);
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void closeConnection() {

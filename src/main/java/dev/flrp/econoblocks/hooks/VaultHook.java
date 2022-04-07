@@ -58,12 +58,4 @@ public class VaultHook {
         economy.depositPlayer(player, amount);
     }
 
-    public static String getPrimaryGroup(Player player) {
-        return permission.getPrimaryGroup(player);
-    }
-
-    public static boolean hasGroupSupport() {
-        return permission.hasGroupSupport();
-    }
-
 }

@@ -1,4 +1,8 @@
 # Configuration of Econoblocks. For help, visit https://docs.axelli.net/
+# Gamemode settings.
+gamemode:
+  # Should people in creative mode get rewards?
+  creative-rewards: false
 
 # Message handling.
 message:
@@ -31,12 +35,12 @@ checks:
     expiry: 3
 
 # Multiplier handling.
-# Here you can create specific multipliers for the ranks you have on the server.
-# The group names will automatically try to find the rank with the same name, so there's no need for permissions.
+# Down below are configurable multiplier groups.
+# When given permission, a user will gain specific multipliers.
 # If any conditions are true, they will be considered towards the output amount.
 # Make sure to balance this properly if you use multipliers. You can leave any category empty with [] if you wish not to use it.
 multipliers:
-  # Attaches to the rank "example" - if there is one.
+  # econoblocks.group.example
   example:
     # Specific block multipliers.
     blocks:
@@ -49,7 +53,7 @@ multipliers:
       - DIAMOND_PICKAXE 1.2
     # The world the block was mined in.
     worlds:
-      - real_world
+      - real_world 1.1
   # More examples...
   coal:
     tools:

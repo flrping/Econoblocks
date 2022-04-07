@@ -11,6 +11,7 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public final class Econoblocks extends JavaPlugin {
 
     private static Econoblocks instance;
 
+    private Configuration config;
     private Configuration blocks;
     private Configuration language;
 
@@ -26,6 +28,7 @@ public final class Econoblocks extends JavaPlugin {
     private MessageManager messageManager;
     private DatabaseManager databaseManager;
     private HookManager hookManager;
+    private MultiplierManager multiplierManager;
 
     private final List<Player> toggleList = new ArrayList<>();
 
@@ -43,13 +46,16 @@ public final class Econoblocks extends JavaPlugin {
         Metrics metrics = new Metrics(this, 12071);
 
         // Files
-        getConfig().options().copyDefaults();
-        saveDefaultConfig();
         initiateFiles();
 
         // Initiation
         Locale.load();
         initiateClasses();
+
+        // Hooks
+        File dir = new File(getDataFolder(), "hooks");
+        if(!dir.exists()) dir.mkdir();
+        hookManager = new HookManager(this);
 
         // Database things
         databaseManager = new DatabaseManager(this);
@@ -62,6 +68,7 @@ public final class Econoblocks extends JavaPlugin {
         CommandManager commandManager = new CommandManager(this);
         commandManager.register(new Commands(this));
         commandManager.getMessageHandler().register("cmd.no.permission", sender -> sender.sendMessage(Locale.parse(Locale.COMMAND_DENIED)));
+        commandManager.getMessageHandler().register("cmd.wrong.usage", sender -> sender.sendMessage(Locale.parse(Locale.PREFIX + "&cInvalid usage. See /econoblocks.")));
 
         Locale.log("&eDone!");
     }
@@ -81,20 +88,19 @@ public final class Econoblocks extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if(getConfig().getBoolean("checks.storage.enabled")) {
-            databaseManager.save();
-            databaseManager.closeConnection();
-        }
+        databaseManager.closeConnection();
     }
 
     private void initiateClasses() {
         blockManager = new BlockManager(this);
         economyManager = new EconomyManager(this);
         messageManager = new MessageManager(this);
-        hookManager = new HookManager(this);
+        multiplierManager = new MultiplierManager(this);
     }
 
     private void initiateFiles() {
+        config = new Configuration(this);
+        config.load("config");
         blocks = new Configuration(this);
         blocks.load("blocks");
         language = new Configuration(this);
@@ -129,11 +135,14 @@ public final class Econoblocks extends JavaPlugin {
         return hookManager;
     }
 
+    public MultiplierManager getMultiplierManager() {
+        return multiplierManager;
+    }
+
     public static Econoblocks getInstance() {
         return instance;
     }
 
-    // Temporary
     public List<Player> getToggleList() {
         return toggleList;
     }

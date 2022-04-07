@@ -19,11 +19,13 @@ public class Locale {
     public static String ECONOMY_TOGGLE;
 
     public static void load() {
+
         PREFIX = addMessage("prefix");
         COMMAND_DENIED = addMessage("command-denied");
         ECONOMY_GIVEN = addMessage("economy-given");
         ECONOMY_MAX = addMessage("economy-max");
         ECONOMY_TOGGLE = addMessage("economy-toggle");
+
     }
 
     private static String addMessage(String identifier) {
