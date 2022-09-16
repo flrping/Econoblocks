@@ -36,7 +36,7 @@ public class EconomyManager {
             if(plugin.getBlockManager().getChances().containsKey(block.getType()) && Math.random() * 100 > plugin.getBlockManager().getChance(block.getType())) return;
 
             // Multipliers
-            if(plugin.getDatabaseManager().isCached(player.getUniqueId())) {
+            if(plugin.getDatabaseManager().isCached(player.getUniqueId()) || plugin.getMultiplierManager().hasMultiplierGroup(player.getUniqueId())) {
                 MultiplierProfile multiplierProfile = plugin.getDatabaseManager().getMultiplierProfile(player.getUniqueId());
                 MultiplierGroup group = plugin.getMultiplierManager().getMultiplierGroup(player.getUniqueId());
 
@@ -78,6 +78,7 @@ public class EconomyManager {
                 plugin.getMessageManager().sendMessage(player, block, dub);
         } catch(Exception e) {
             player.sendMessage(Locale.parse(Locale.PREFIX + Locale.ECONOMY_MAX));
+            System.out.println(e);
         }
     }
 

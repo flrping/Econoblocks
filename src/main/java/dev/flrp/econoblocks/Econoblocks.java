@@ -14,6 +14,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public final class Econoblocks extends JavaPlugin {
 
@@ -30,14 +31,14 @@ public final class Econoblocks extends JavaPlugin {
     private HookManager hookManager;
     private MultiplierManager multiplierManager;
 
-    private final List<Player> toggleList = new ArrayList<>();
+    private final List<UUID> toggleList = new ArrayList<>();
 
     @Override
     public void onEnable() {
         instance = this;
 
         Locale.log("&8--------------");
-        Locale.log("&eEconoblocks &rby flrp &8(&ev1.3.0&8)");
+        Locale.log("&eEconoblocks &rby flrp &8(&ev1.3.1&8)");
         Locale.log("Consider &cPatreon &rto support me for keeping these plugins free.");
         Locale.log("&8--------------");
         Locale.log("&eStarting...");
@@ -143,7 +144,7 @@ public final class Econoblocks extends JavaPlugin {
         return instance;
     }
 
-    public List<Player> getToggleList() {
+    public List<UUID> getToggleList() {
         return toggleList;
     }
 

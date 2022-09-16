@@ -12,12 +12,14 @@ import java.util.UUID;
 public class MultiplierGroup {
 
     private final String identifier;
+    private final int weight;
     private final HashMap<Material, Double> tools = new HashMap<>();
     private final HashMap<UUID, Double> worlds = new HashMap<>();
     private final HashMap<Material, Double> materials = new HashMap<>();
 
     public MultiplierGroup(String identifier) {
         this.identifier = identifier;
+        weight = Econoblocks.getInstance().getConfig().contains("multipliers." + identifier + ".weight") ? Econoblocks.getInstance().getConfig().getInt("multipliers." + identifier + ".weight") : 0;
         for(String entry : Econoblocks.getInstance().getConfig().getStringList("multipliers." + identifier + ".blocks")) {
             try {
                 Material material = Material.getMaterial(entry.substring(0, entry.indexOf(' ')));
@@ -55,6 +57,13 @@ public class MultiplierGroup {
      */
     public String getIdentifier() {
         return identifier;
+    }
+
+    /*
+     * Returns the weight of the group.
+     */
+    public int getWeight() {
+        return weight;
     }
 
     /*

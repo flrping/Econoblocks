@@ -42,6 +42,8 @@ checks:
 multipliers:
   # econoblocks.group.example
   example:
+    # Higher the number, heavier the group, higher priority.
+    weight: 1
     # Specific block multipliers.
     blocks:
       - COAL_ORE 1.5
@@ -56,9 +58,11 @@ multipliers:
       - real_world 1.1
   # More examples...
   coal:
+    weight: 2
     tools:
       - IRON_PICKAXE 1.1
   diamond:
+    weight: 3
     blocks:
       - DIAMOND_ORE 1.5
     tools:

@@ -11,8 +11,7 @@ import java.util.Map;
 public class BlockManager {
 
     List<String> worlds;
-    HashMap<Material, Double> amounts = new HashMap<>();
-    HashMap<Material, Double> chances = new HashMap<>();
+    HashMap<Material, Double> amounts = new HashMap<>(), chances = new HashMap<>();
 
     public BlockManager(Econoblocks plugin) {
         for(Map.Entry<String, Object> entry : plugin.getBlocks().getConfiguration().getConfigurationSection("blocks").getValues(false).entrySet()) {
@@ -25,6 +24,7 @@ public class BlockManager {
             amounts.put(material, value.contains(" ") ? Double.parseDouble(value.substring(0, value.indexOf(" "))) : Double.parseDouble(value));
             chances.put(material, value.contains(" ") ? Double.parseDouble(value.substring(value.indexOf(" "))) : 100);
         }
+        Locale.log("Loaded &e" + amounts.size() + " &rblock values.");
         worlds = plugin.getConfig().getStringList("world-blacklist");
     }
 

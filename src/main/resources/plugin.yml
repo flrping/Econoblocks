@@ -3,7 +3,7 @@ version: ${project.version}
 main: dev.flrp.econoblocks.Econoblocks
 api-version: 1.13
 depend: [ Vault ]
-softdepend: [ Essentials, EconomyX, CMI ]
+softdepend: [ Essentials, EconomyX, CMI, Multiverse-Core ]
 authors: [ flrp ]
 description: A plugin that rewards players for mining blocks
 commands:

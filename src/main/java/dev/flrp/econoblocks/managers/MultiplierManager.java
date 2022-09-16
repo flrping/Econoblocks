@@ -34,11 +34,25 @@ public class MultiplierManager {
 
     public MultiplierGroup getMultiplierGroup(UUID uuid) {
         Set<PermissionAttachmentInfo> infoSet = Bukkit.getPlayer(uuid).getEffectivePermissions();
+        String group = null;
+        int weight = 0;
         for(PermissionAttachmentInfo info : infoSet) {
             if(!info.getPermission().startsWith("econoblocks.group.")) continue;
-            return groups.get(info.getPermission().substring(18));
+            String g = info.getPermission().substring(18);
+            if(!groups.containsKey(g)) continue;
+            int w = groups.get(g).getWeight();
+            if(w < weight) continue;
+            group = g;
+            weight = w;
         }
-        return null;
+        return groups.get(group);
+    }
+
+    public boolean hasMultiplierGroup(UUID uuid) {
+        for(String groupName : groups.keySet()) {
+            if(Bukkit.getPlayer(uuid).hasPermission("econoblocks.group." + groupName)) return true;
+        }
+        return false;
     }
 
     public boolean isMultiplierGroup(String identifier) {

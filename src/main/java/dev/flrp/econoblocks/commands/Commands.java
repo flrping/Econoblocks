@@ -25,7 +25,7 @@ public class Commands extends CommandBase {
 
     @Default
     public void defaultCommand(final CommandSender sender) {
-        sender.sendMessage(Locale.parse("\n&6&lECONOBLOCKS &7Version 1.3.0 &8| &7By flrp"));
+        sender.sendMessage(Locale.parse("\n&6&lECONOBLOCKS &7Version 1.3.1 &8| &7By flrp"));
         sender.sendMessage(Locale.parse("&6/econoblocks &fhelp &8- &7Displays this menu."));
         sender.sendMessage(Locale.parse("&6/econoblocks &ftoggle &8- &7Toggles the money message."));
         if(sender.hasPermission("econoblocks.admin")) {
@@ -46,11 +46,11 @@ public class Commands extends CommandBase {
     public void toggleCommand(final CommandSender sender) {
         Player player = (Player) sender;
         send(sender, Locale.ECONOMY_TOGGLE);
-        if(!plugin.getToggleList().contains(player)) {
-            plugin.getToggleList().add(player);
+        if(!plugin.getToggleList().contains(player.getUniqueId())) {
+            plugin.getToggleList().add(player.getUniqueId());
             return;
         }
-         plugin.getToggleList().remove(player);
+         plugin.getToggleList().remove(player.getUniqueId());
     }
 
     @SubCommand("multiplier")
@@ -150,29 +150,29 @@ public class Commands extends CommandBase {
 
         sender.sendMessage(Locale.parse("\n&6&lMULTIPLIER PROFILE"));
         sender.sendMessage(Locale.parse("&7Username: &f" + player.getName()));
-        sender.sendMessage(Locale.parse("&7Group: &f" + (group != null ? group.getIdentifier() : "N/A")));
+        sender.sendMessage(Locale.parse("&7Group: &f" + (group != null ? group.getIdentifier() + " &6(Weight: " + group.getWeight() + ")": "N/A")));
 
         sender.sendMessage(Locale.parse("&7Block Multipliers:"));
-        if(!multiplierProfile.getMaterials().isEmpty()) multiplierProfile.getMaterials().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &ax" + value + "&8 |&7 SPECIFIC")));
+        if(!multiplierProfile.getMaterials().isEmpty()) multiplierProfile.getMaterials().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 SPECIFIC")));
         if(group != null) {
             group.getMaterials().forEach((key, value) -> {
-                if(!multiplierProfile.getMaterials().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &ax" + value + "&8 |&7 GROUP"));
+                if(!multiplierProfile.getMaterials().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 GROUP"));
             });
         }
 
         sender.sendMessage(Locale.parse("&7Tool Multipliers:"));
-        if(!multiplierProfile.getTools().isEmpty()) multiplierProfile.getTools().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 : &ax" + value + "&8 |&7 SPECIFIC")));
+        if(!multiplierProfile.getTools().isEmpty()) multiplierProfile.getTools().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 : &6x" + value + "&8 |&7 SPECIFIC")));
         if(group != null) {
             group.getTools().forEach((key, value) -> {
-                if(!multiplierProfile.getTools().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &ax" + value + "&8 |&7 GROUP"));
+                if(!multiplierProfile.getTools().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 GROUP"));
             });
         }
 
         sender.sendMessage(Locale.parse("&7World Multipliers:"));
-        if(!multiplierProfile.getWorlds().isEmpty()) multiplierProfile.getWorlds().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &ax" + value + "&8 |&7 SPECIFIC")));
+        if(!multiplierProfile.getWorlds().isEmpty()) multiplierProfile.getWorlds().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 SPECIFIC")));
         if(group != null) {
             group.getWorlds().forEach((key, value) -> {
-                if(!multiplierProfile.getWorlds().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &ax" + value + "&8 |&7 GROUP"));
+                if(!multiplierProfile.getWorlds().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 GROUP"));
             });
         }
     }
