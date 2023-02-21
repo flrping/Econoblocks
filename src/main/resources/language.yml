@@ -1,6 +1,8 @@
 prefix: "&8[&6Econoblocks&8] "
 command-denied: "&cYou do not have permission to run this command"
 # {0} prints out the money made.
-economy-given: "&7You've earned &f${0} &7by mining this block."
+# {1} prints out the base before multipliers are added.
+# {2} prints the multiplier.
+economy-given: "&7You've earned &f${0} &7by mining this block. &7&o({1} x {2})"
 economy-max: "&cYou can't earn more money due to a maximum balance."
 economy-toggle: "&7Toggled income messages."

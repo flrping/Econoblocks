@@ -38,7 +38,7 @@ public final class Econoblocks extends JavaPlugin {
         instance = this;
 
         Locale.log("&8--------------");
-        Locale.log("&eEconoblocks &rby flrp &8(&ev1.3.1&8)");
+        Locale.log("&eEconoblocks &rby flrp &8(&ev1.4.0&8)");
         Locale.log("Consider &cPatreon &rto support me for keeping these plugins free.");
         Locale.log("&8--------------");
         Locale.log("&eStarting...");
