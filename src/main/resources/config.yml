@@ -1,4 +1,6 @@
 # Configuration of Econoblocks. For help, visit https://docs.axelli.net/
+config-version: 5
+
 # Gamemode settings.
 gamemode:
   # Should people in creative mode get rewards?

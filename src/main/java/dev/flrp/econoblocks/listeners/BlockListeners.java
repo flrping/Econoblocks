@@ -27,7 +27,7 @@ public class BlockListeners implements Listener {
         Block block = event.getBlock();
         if(!plugin.getConfig().getBoolean("gamemode.creative-rewards") && player.getGameMode() == GameMode.CREATIVE) return;
         if(plugin.getBlockManager().getBlacklistedWorlds().contains(block.getWorld().getName())) return;
-        if(!plugin.getBlockManager().getAmounts().containsKey(block.getType())) return;
+        if(!plugin.getBlockManager().hasReward(block.getType())) return;
         if(plugin.getDatabaseManager().isCached(block.getLocation())) {
             plugin.getDatabaseManager().removeBlockEntry(block.getLocation());
             return;
@@ -39,7 +39,7 @@ public class BlockListeners implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Block block = event.getBlock();
         if(plugin.getBlockManager().getBlacklistedWorlds().contains(block.getWorld().getName())) return;
-        if(!plugin.getBlockManager().getAmounts().containsKey(block.getType())) return;
+        if(!plugin.getBlockManager().hasReward(block.getType())) return;
         plugin.getDatabaseManager().addBlockEntry(block.getLocation());
     }
 

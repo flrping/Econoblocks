@@ -27,59 +27,72 @@ public class EconomyManager {
             // Check if player has balance.
             if(!VaultHook.hasAccount(player)) VaultHook.createAccount(player);
 
-            // Variables
+            // Multiplier Variables
+            Material material = block.getType();
             Material tool = Methods.itemInHand(player).getType();
             UUID uuid = block.getWorld().getUID();
-            double amount = plugin.getBlockManager().getAmount(block.getType());
 
-            // Checks
-            if(plugin.getBlockManager().getChances().containsKey(block.getType()) && Math.random() * 100 > plugin.getBlockManager().getChance(block.getType())) return;
+            // Money
+            double base = plugin.getBlockManager().getReward(material).calculateReward();
 
             // Multipliers
-            if(plugin.getDatabaseManager().isCached(player.getUniqueId()) || plugin.getMultiplierManager().hasMultiplierGroup(player.getUniqueId())) {
-                MultiplierProfile multiplierProfile = plugin.getDatabaseManager().getMultiplierProfile(player.getUniqueId());
-                MultiplierGroup group = plugin.getMultiplierManager().getMultiplierGroup(player.getUniqueId());
+            double multiplier = handleMultipliers(player, block, tool, uuid);
 
-                if(multiplierProfile.getMaterials().containsKey(block.getType())) {
-                    amount = amount * multiplierProfile.getMaterials().get(block.getType());
-                } else
-                if(group != null && group.getMaterials().containsKey(block.getType())){
-                    amount = amount * group.getMaterials().get(block.getType());
-                }
-
-                if(multiplierProfile.getTools().containsKey(tool)) {
-                    amount = amount * multiplierProfile.getTools().get(tool);
-                } else
-                if(group != null && group.getTools().containsKey(tool)){
-                    amount = amount * group.getTools().get(tool);
-                }
-
-                if(multiplierProfile.getWorlds().containsKey(uuid)) {
-                    amount = amount * multiplierProfile.getWorlds().get(uuid);
-                } else
-                if(group != null && group.getWorlds().containsKey(uuid)){
-                    amount = amount * group.getWorlds().get(uuid);
-                }
-
-            }
+            // Mathing
+            multiplier = (double) Math.round(multiplier * 100) / 100;
+            double result = (double) Math.round((base * multiplier) * 100) / 100;
 
             // Event
-            BlockGiveEconomyEvent blockGiveEconomyEvent = new BlockGiveEconomyEvent(amount, block);
+            BlockGiveEconomyEvent blockGiveEconomyEvent = new BlockGiveEconomyEvent(result, block);
             Bukkit.getPluginManager().callEvent(blockGiveEconomyEvent);
             if(blockGiveEconomyEvent.isCancelled()) {
                 blockGiveEconomyEvent.setCancelled(true);
                 return;
             }
 
-            // Magic
-            double dub = (double) Math.round(amount * 100) / 100;
-            VaultHook.deposit(player, dub);
-            if(plugin.getConfig().getBoolean("message.enabled") && !plugin.getToggleList().contains(player))
-                plugin.getMessageManager().sendMessage(player, block, dub);
+            // Distribution
+            if(result == 0) return;
+            VaultHook.deposit(player, result);
+
+            // Message
+            if(!plugin.getConfig().getBoolean("message.enabled")) return;
+            if(plugin.getToggleList().contains(player.getUniqueId())) return;
+            plugin.getMessageManager().sendMessage(player, block, base, result, multiplier);
+
         } catch(Exception e) {
             player.sendMessage(Locale.parse(Locale.PREFIX + Locale.ECONOMY_MAX));
             System.out.println(e);
         }
+    }
+
+    private double handleMultipliers(Player player, Block block, Material tool, UUID uuid) {
+        double multiplier = 1;
+        if(plugin.getDatabaseManager().isCached(player.getUniqueId()) || plugin.getMultiplierManager().hasMultiplierGroup(player.getUniqueId())) {
+            MultiplierProfile multiplierProfile = plugin.getDatabaseManager().getMultiplierProfile(player.getUniqueId());
+            MultiplierGroup group = plugin.getMultiplierManager().getMultiplierGroup(player.getUniqueId());
+
+            if(multiplierProfile.getMaterials().containsKey(block.getType())) {
+                multiplier = multiplier * multiplierProfile.getMaterials().get(block.getType());
+            } else
+            if(group != null && group.getMaterials().containsKey(block.getType())){
+                multiplier = multiplier * group.getMaterials().get(block.getType());
+            }
+
+            if(multiplierProfile.getTools().containsKey(tool)) {
+                multiplier = multiplier * multiplierProfile.getTools().get(tool);
+            } else
+            if(group != null && group.getTools().containsKey(tool)){
+                multiplier = multiplier * group.getTools().get(tool);
+            }
+
+            if(multiplierProfile.getWorlds().containsKey(uuid)) {
+                multiplier = multiplier * multiplierProfile.getWorlds().get(uuid);
+            } else
+            if(group != null && group.getWorlds().containsKey(uuid)){
+                multiplier = multiplier * group.getWorlds().get(uuid);
+            }
+        }
+        return multiplier;
     }
 
 }
