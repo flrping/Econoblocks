@@ -11,6 +11,7 @@ public class MultiplierProfile {
     UUID uuid;
     HashMap<Material, Double> materials = new HashMap<>(), tools = new HashMap<>();
     HashMap<UUID, Double> worlds = new HashMap<>();
+    HashMap<String, Double> customMaterials = new HashMap<>(), customTools = new HashMap<>();
 
     public MultiplierProfile(UUID uuid) {
         this.uuid = uuid;
@@ -30,6 +31,14 @@ public class MultiplierProfile {
 
     public HashMap<UUID, Double> getWorlds() {
         return worlds;
+    }
+
+    public HashMap<String, Double> getCustomMaterials() {
+        return customMaterials;
+    }
+
+    public HashMap<String, Double> getCustomTools() {
+        return customTools;
     }
 
     public void addBlockMultiplier(Material material, double multiplier) {
@@ -62,6 +71,26 @@ public class MultiplierProfile {
         }
     }
 
+    public void addCustomBlockMultiplier(String material, double multiplier) {
+        if(customMaterials.containsKey(material)) {
+            customMaterials.replace(material, multiplier);
+            Econoblocks.getInstance().getDatabaseManager().updateCustomBlockMultiplier(uuid, material, multiplier);
+        } else {
+            customMaterials.put(material, multiplier);
+            Econoblocks.getInstance().getDatabaseManager().addCustomBlockMultiplier(uuid, material, multiplier);
+        }
+    }
+
+    public void addCustomToolMultiplier(String material, double multiplier) {
+        if(customTools.containsKey(material)) {
+            customTools.replace(material, multiplier);
+            Econoblocks.getInstance().getDatabaseManager().updateCustomToolMultiplier(uuid, material, multiplier);
+        } else {
+            customTools.put(material, multiplier);
+            Econoblocks.getInstance().getDatabaseManager().addCustomToolMultiplier(uuid, material, multiplier);
+        }
+    }
+
     public void removeBlockMultiplier(Material material) {
         materials.remove(material);
         Econoblocks.getInstance().getDatabaseManager().removeBlockMultiplier(uuid, material);
@@ -75,6 +104,16 @@ public class MultiplierProfile {
     public void removeWorldMultiplier(UUID world) {
         worlds.remove(world);
         Econoblocks.getInstance().getDatabaseManager().removeWorldMultiplier(uuid, world);
+    }
+
+    public void removeCustomBlockMultiplier(String material) {
+        customMaterials.remove(material);
+        Econoblocks.getInstance().getDatabaseManager().removeCustomBlockMultiplier(uuid, material);
+    }
+
+    public void removeCustomToolMultiplier(String material) {
+        customTools.remove(material);
+        Econoblocks.getInstance().getDatabaseManager().removeCustomToolMultiplier(uuid, material);
     }
 
 }

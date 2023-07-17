@@ -25,13 +25,13 @@ public class Commands extends CommandBase {
 
     @Default
     public void defaultCommand(final CommandSender sender) {
-        sender.sendMessage(Locale.parse("\n&6&lECONOBLOCKS &7Version 1.4.0 &8| &7By flrp"));
+        sender.sendMessage(Locale.parse("\n&6&lECONOBLOCKS &7Version 1.4.1 &8| &7By flrp"));
         sender.sendMessage(Locale.parse("&6/econoblocks &fhelp &8- &7Displays this menu."));
         sender.sendMessage(Locale.parse("&6/econoblocks &ftoggle &8- &7Toggles the money message."));
         if(sender.hasPermission("econoblocks.admin")) {
             sender.sendMessage(Locale.parse("&6/econoblocks &fcheck <user> &8- &7Shows the multipliers a user has."));
-            sender.sendMessage(Locale.parse("&6/econoblocks &fmultiplier add <user> <block/tool/world> <context> <multiplier> &8- &7Adds a multiplier to a user."));
-            sender.sendMessage(Locale.parse("&6/econoblocks &fmultiplier remove <user> <block/tool/world> <context> &8- &7Removes a multiplier from a user."));
+            sender.sendMessage(Locale.parse("&6/econoblocks &fmultiplier add <user> <block/tool/world/custom_block/custom_tool> <context> <multiplier> &8- &7Adds a multiplier to a user."));
+            sender.sendMessage(Locale.parse("&6/econoblocks &fmultiplier remove <user> <block/tool/world/custom_block/custom_tool> <context> &8- &7Removes a multiplier from a user."));
             sender.sendMessage(Locale.parse("&6/econoblocks &freload &8- &7Reloads the plugin."));
         }
     }
@@ -139,6 +139,23 @@ public class Commands extends CommandBase {
                 return;
             }
         }
+        if(args[3].equals("custom_block") || args[3].equals("custom_tool")) {
+            String identifier = args[4];
+            if(identifier == null) {
+                send(sender, "&4" + args[4] + " &cis not a valid identifier.");
+                return;
+            }
+            if(args[1].equals("add")) {
+                if (args[3].equals("custom_block")) {
+                    multiplierProfile.addCustomBlockMultiplier(identifier, multiplier);
+                } else {
+                    multiplierProfile.addCustomToolMultiplier(identifier, multiplier);
+                }
+                send(sender,"&7Successfully set a multiplier for &f" + recipient.getName() + " &7(" + args[4] + ", " + multiplier + ").");
+                return;
+            }
+        }
+
         send(sender, "&cInvalid usage. See /econoblocks.");
     }
 
@@ -173,6 +190,20 @@ public class Commands extends CommandBase {
         if(group != null) {
             group.getWorlds().forEach((key, value) -> {
                 if(!multiplierProfile.getWorlds().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 GROUP"));
+            });
+        }
+        sender.sendMessage(Locale.parse("&7Custom Block Multipliers:"));
+        if(!multiplierProfile.getCustomMaterials().isEmpty()) multiplierProfile.getCustomMaterials().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 SPECIFIC")));
+        if(group != null) {
+            group.getCustomMaterials().forEach((key, value) -> {
+                if(!multiplierProfile.getCustomMaterials().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 GROUP"));
+            });
+        }
+        sender.sendMessage(Locale.parse("&7Custom Tool Multipliers:"));
+        if(!multiplierProfile.getCustomTools().isEmpty()) multiplierProfile.getCustomTools().forEach((key, value) -> sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 SPECIFIC")));
+        if(group != null) {
+            group.getCustomTools().forEach((key, value) -> {
+                if(!multiplierProfile.getCustomTools().containsKey(key)) sender.sendMessage(Locale.parse("&8 - &f" + key + "&8 &6x" + value + "&8 |&7 GROUP"));
             });
         }
     }

@@ -38,7 +38,7 @@ public class BlockManager {
                 }
             }
 
-            for (String value : plugin.getBlocks().getConfiguration().getStringList("blocks." + block)){
+            for (String value : plugin.getBlocks().getConfiguration().getStringList("blocks." + block)) {
                 double amount = value.contains(" ") ? Double.parseDouble(value.substring(0, value.indexOf(" "))) : Double.parseDouble(value);
                 double chance = value.contains(" ") ? Double.parseDouble(value.substring(value.indexOf(" "))) : 100;
                 reward.getDropList().put(amount, chance);

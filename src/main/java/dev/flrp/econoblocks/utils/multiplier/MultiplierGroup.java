@@ -1,7 +1,9 @@
 package dev.flrp.econoblocks.utils.multiplier;
 
 import dev.flrp.econoblocks.Econoblocks;
+import dev.flrp.econoblocks.configuration.Configuration;
 import dev.flrp.econoblocks.configuration.Locale;
+import dev.flrp.econoblocks.hooks.ItemsAdderHook;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -16,6 +18,8 @@ public class MultiplierGroup {
     private final HashMap<Material, Double> tools = new HashMap<>();
     private final HashMap<UUID, Double> worlds = new HashMap<>();
     private final HashMap<Material, Double> materials = new HashMap<>();
+
+    private final HashMap<String, Double> customMaterials = new HashMap<>(), customTools = new HashMap<>();
 
     public MultiplierGroup(String identifier) {
         this.identifier = identifier;
@@ -49,7 +53,27 @@ public class MultiplierGroup {
                 Locale.log("&cWorld cannot be found (" + entry + "), skipping.");
             }
         }
-
+        if(!ItemsAdderHook.isEnabled()) return;
+        Configuration itemsAdderFile = new Configuration(Econoblocks.getInstance());
+        itemsAdderFile.load("hooks/ItemsAdder");
+        for(String entry : itemsAdderFile.getConfiguration().getStringList("multipliers." + identifier + ".blocks")) {
+            try {
+                String material = entry.substring(0, entry.indexOf(' '));
+                double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
+                customMaterials.put(material, multiplier);
+            } catch (IndexOutOfBoundsException e) {
+                Locale.log("&cInvalid entry (" + entry + "), skipping.");
+            }
+        }
+        for(String entry : itemsAdderFile.getConfiguration().getStringList("multipliers." + identifier + ".tools")) {
+            try {
+                String material = entry.substring(0, entry.indexOf(' '));
+                double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
+                customTools.put(material, multiplier);
+            } catch (IndexOutOfBoundsException e) {
+                Locale.log("&cInvalid entry (" + entry + "), skipping.");
+            }
+        }
     }
 
     /*
@@ -85,6 +109,20 @@ public class MultiplierGroup {
      */
     public HashMap<UUID, Double> getWorlds() {
         return worlds;
+    }
+
+    /*
+     * Returns the list used for custom block multipliers.
+     */
+    public HashMap<String, Double> getCustomMaterials() {
+        return customMaterials;
+    }
+
+    /*
+     * Returns the list used for custom tool multipliers.
+     */
+    public HashMap<String, Double> getCustomTools() {
+        return customTools;
     }
 
 }
