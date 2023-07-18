@@ -6,9 +6,9 @@ import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.listeners.BlockListeners;
 import dev.flrp.econoblocks.listeners.ChunkListeners;
 import dev.flrp.econoblocks.managers.*;
+import dev.flrp.econoblocks.utils.UpdateChecker;
 import me.mattstudios.mf.base.CommandManager;
 import org.bstats.bukkit.Metrics;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -19,6 +19,8 @@ import java.util.UUID;
 public final class Econoblocks extends JavaPlugin {
 
     private static Econoblocks instance;
+    private final String version = "v1.4.1";
+    private final int resourceID = 91161;
 
     private Configuration config;
     private Configuration blocks;
@@ -38,7 +40,7 @@ public final class Econoblocks extends JavaPlugin {
         instance = this;
 
         Locale.log("&8--------------");
-        Locale.log("&eEconoblocks &rby flrp &8(&ev1.4.0&8)");
+        Locale.log("&eEconoblocks &rby flrp &8(&ev1.4.1&8)");
         Locale.log("Consider &cPatreon &rto support me for keeping these plugins free.");
         Locale.log("&8--------------");
         Locale.log("&eStarting...");
@@ -52,6 +54,18 @@ public final class Econoblocks extends JavaPlugin {
         // Initiation
         Locale.load();
         initiateClasses();
+
+        // Check for update
+        new UpdateChecker(this, resourceID).checkForUpdate(version -> {
+            if(getConfig().getBoolean("check-for-updates")) {
+                if (this.getDescription().getVersion().equalsIgnoreCase(version)) {
+                    Locale.log("&eYou are running the latest version of Econoblocks.");
+                } else {
+                    Locale.log("&eThere is a new version of Econoblocks available.");
+                    Locale.log("&eDownload it here: &bhttps://www.spigotmc.org/resources/econoblocks.91161/");
+                }
+            }
+        });
 
         // Hooks
         File dir = new File(getDataFolder(), "hooks");
@@ -83,6 +97,9 @@ public final class Econoblocks extends JavaPlugin {
         // Initiation
         Locale.load();
         initiateClasses();
+
+        // Hooks
+        hookManager.reload();
 
         Locale.log("&eDone!");
     }

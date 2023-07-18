@@ -81,6 +81,40 @@ public class DatabaseManager {
             multiplierStatement.close();
             multiplierResultSet.close();
 
+            // Specific custom multiplier table
+            Statement customMultiplierTableStatement = connection.createStatement();
+            String createCustomMultiplierTable = "CREATE TABLE IF NOT EXISTS custom_multipliers (" +
+                    "user varchar(36) NOT NULL," +
+                    "context varchar NOT NULL," +
+                    "multiplier double NOT NULL," +
+                    "type varchar CHECK( type IN ('MATERIAL', 'TOOL')) NOT NULL)";
+            customMultiplierTableStatement.executeUpdate(createCustomMultiplierTable);
+            customMultiplierTableStatement.close();
+
+            // Handling specific custom multipliers
+            String customMultiplierSql = "SELECT * FROM custom_multipliers";
+            Statement customMultiplierStatement = connection.createStatement();
+            ResultSet  customMultiplierResultSet = customMultiplierStatement.executeQuery(customMultiplierSql);
+            while (customMultiplierResultSet.next()) {
+                UUID uuid = UUID.fromString(customMultiplierResultSet.getString("user"));
+                MultiplierProfile mp = playerCache.containsKey(uuid) ? playerCache.get(uuid) : new MultiplierProfile(uuid);
+                playerCache.put(uuid, mp);
+
+                switch (customMultiplierResultSet.getString("type")) {
+                    case "MATERIAL":
+                        mp.getCustomMaterials().put(customMultiplierResultSet.getString("context"),
+                                customMultiplierResultSet.getDouble("multiplier"));
+                        break;
+                    case "TOOL":
+                        mp.getCustomTools().put(customMultiplierResultSet.getString("context"),
+                                customMultiplierResultSet.getDouble("multiplier"));
+                        break;
+                    default:
+                }
+            }
+            customMultiplierStatement.close();
+            customMultiplierResultSet.close();
+
             Locale.log("Loaded &e" + playerCache.size() + " &rmultiplier profiles from the database.");
 
             // Stopping if owner wishes not to store block data.
@@ -235,6 +269,8 @@ public class DatabaseManager {
         addMultiplier(uuid, world.toString(), "WORLD", multiplier);
     }
 
+    //
+
     private void updateMultiplier(UUID uuid, String context, String type, double multiplier) {
         query("UPDATE multipliers SET multiplier=" + multiplier + " WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
     }
@@ -251,6 +287,8 @@ public class DatabaseManager {
         updateMultiplier(uuid, world.toString(), "WORLD", multiplier);
     }
 
+    //
+
     private void removeMultiplier(UUID uuid, String context, String type) {
         query("DELETE FROM multipliers WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
     }
@@ -265,6 +303,44 @@ public class DatabaseManager {
 
     public void removeWorldMultiplier(UUID uuid, UUID world) {
         removeMultiplier(uuid, world.toString(), "WORLD");
+    }
+
+    //
+
+    public void addCustomMultiplier(UUID uuid, String context, String type, double multiplier) {
+        query("INSERT INTO custom_multipliers (user,context,multiplier,type) VALUES ('" + uuid + "', '" + context + "', " + multiplier + " ,'" + type + "');");
+    }
+
+    public void addCustomBlockMultiplier(UUID uuid, String block, double multiplier) {
+        addCustomMultiplier(uuid, block, "MATERIAL", multiplier);
+    }
+
+    public void addCustomToolMultiplier(UUID uuid, String tool, double multiplier) {
+        addCustomMultiplier(uuid, tool, "TOOL", multiplier);
+    }
+
+    public void updateCustomMultiplier(UUID uuid, String context, String type, double multiplier) {
+        query("UPDATE custom_multipliers SET multiplier=" + multiplier + " WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
+    }
+
+    public void updateCustomBlockMultiplier(UUID uuid, String block, double multiplier) {
+        updateCustomMultiplier(uuid, block, "MATERIAL", multiplier);
+    }
+
+    public void updateCustomToolMultiplier(UUID uuid, String tool, double multiplier) {
+        updateCustomMultiplier(uuid, tool, "TOOL", multiplier);
+    }
+
+    public void removeCustomMultiplier(UUID uuid, String context, String type) {
+        query("DELETE FROM custom_multipliers WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
+    }
+
+    public void removeCustomBlockMultiplier(UUID uuid, String block) {
+        removeCustomMultiplier(uuid, block, "MATERIAL");
+    }
+
+    public void removeCustomToolMultiplier(UUID uuid, String tool) {
+        removeCustomMultiplier(uuid, tool, "TOOL");
     }
 
     private void query(String sql) {
