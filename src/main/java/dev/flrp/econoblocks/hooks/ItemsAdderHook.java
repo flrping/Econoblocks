@@ -23,7 +23,7 @@ public class ItemsAdderHook implements Listener {
 
     public static void register() {
         if(!isEnabled()) return;
-        Locale.log("Custom material plugin (&eItemsAdder&r) found. Attempting to hook.");
+        Locale.log("&eItemsAdder&r found. Attempting to hook.");
         build();
         Bukkit.getPluginManager().registerEvents(new ItemsAdderListeners(instance), instance);
     }
@@ -39,9 +39,16 @@ public class ItemsAdderHook implements Listener {
         itemsAdderFile.load("hooks/ItemsAdder");
 
         // Initial build
+        if(itemsAdderFile.getConfiguration().getConfigurationSection("multipliers") == null) {
+            itemsAdderFile.getConfiguration().createSection("multipliers.example.blocks");
+            itemsAdderFile.getConfiguration().set("multipliers.example.blocks.carved_wood_log", "1.2");
+            itemsAdderFile.getConfiguration().createSection("multipliers.example.tools");
+            itemsAdderFile.getConfiguration().set("multipliers.example.tools.emerald_pickaxe", "1.2");
+            itemsAdderFile.save();
+        }
         if(itemsAdderFile.getConfiguration().getConfigurationSection("blocks") == null) {
             itemsAdderFile.getConfiguration().createSection("blocks");
-            itemsAdderFile.getConfiguration().set("blocks.red_block", new ArrayList<>(Collections.singletonList("10")));
+            itemsAdderFile.getConfiguration().set("blocks.carved_wood_block", new ArrayList<>(Collections.singletonList("10")));
             itemsAdderFile.save();
         }
 
@@ -63,6 +70,7 @@ public class ItemsAdderHook implements Listener {
 
     // Methods
     public static boolean isEnabled() {
+        if(!instance.getConfig().getBoolean("hooks.ItemsAdder")) return false;
         return Bukkit.getPluginManager().isPluginEnabled("ItemsAdder");
     }
 

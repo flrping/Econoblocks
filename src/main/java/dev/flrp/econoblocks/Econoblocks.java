@@ -12,14 +12,9 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 public final class Econoblocks extends JavaPlugin {
 
@@ -62,11 +57,13 @@ public final class Econoblocks extends JavaPlugin {
 
         // Check for update
         new UpdateChecker(this, resourceID).checkForUpdate(version -> {
-            if (this.getDescription().getVersion().equalsIgnoreCase(version)) {
-                Locale.log("&eYou are running the latest version of Econoblocks.");
-            } else {
-                Locale.log("&eThere is a new version of Econoblocks available.");
-                Locale.log("&eDownload it here: &bhttps://www.spigotmc.org/resources/econoblocks.91161/");
+            if(getConfig().getBoolean("check-for-updates")) {
+                if (this.getDescription().getVersion().equalsIgnoreCase(version)) {
+                    Locale.log("&eYou are running the latest version of Econoblocks.");
+                } else {
+                    Locale.log("&eThere is a new version of Econoblocks available.");
+                    Locale.log("&eDownload it here: &bhttps://www.spigotmc.org/resources/econoblocks.91161/");
+                }
             }
         });
 
