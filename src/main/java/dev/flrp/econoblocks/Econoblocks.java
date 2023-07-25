@@ -19,7 +19,6 @@ import java.util.UUID;
 public final class Econoblocks extends JavaPlugin {
 
     private static Econoblocks instance;
-    private final String version = "v1.4.1";
     private final int resourceID = 91161;
 
     private Configuration config;
@@ -40,7 +39,7 @@ public final class Econoblocks extends JavaPlugin {
         instance = this;
 
         Locale.log("&8--------------");
-        Locale.log("&eEconoblocks &rby flrp &8(&ev1.4.1&8)");
+        Locale.log("&eEconoblocks &rby flrp &8(&ev " + this.getDescription().getVersion() + "&8)");
         Locale.log("Consider &cPatreon &rto support me for keeping these plugins free.");
         Locale.log("&8--------------");
         Locale.log("&eStarting...");
@@ -58,11 +57,11 @@ public final class Econoblocks extends JavaPlugin {
         // Check for update
         new UpdateChecker(this, resourceID).checkForUpdate(version -> {
             if(getConfig().getBoolean("check-for-updates")) {
-                if (this.getDescription().getVersion().equalsIgnoreCase(version)) {
-                    Locale.log("&eYou are running the latest version of Econoblocks.");
-                } else {
-                    Locale.log("&eThere is a new version of Econoblocks available.");
-                    Locale.log("&eDownload it here: &bhttps://www.spigotmc.org/resources/econoblocks.91161/");
+                if (!this.getDescription().getVersion().equalsIgnoreCase(version)) {
+                    Locale.log("&8--------------");
+                    Locale.log("There is a new version of Econoblocks available.");
+                    Locale.log("Download it here:&e https://www.spigotmc.org/resources/econoblocks.91161/");
+                    Locale.log("&8--------------");
                 }
             }
         });

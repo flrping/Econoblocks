@@ -1,9 +1,7 @@
 package dev.flrp.econoblocks.utils.multiplier;
 
 import dev.flrp.econoblocks.Econoblocks;
-import dev.flrp.econoblocks.configuration.Configuration;
 import dev.flrp.econoblocks.configuration.Locale;
-import dev.flrp.econoblocks.hooks.ItemsAdderHook;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -14,11 +12,10 @@ import java.util.UUID;
 public class MultiplierGroup {
 
     private final String identifier;
-    private final int weight;
+    private int weight;
     private final HashMap<Material, Double> tools = new HashMap<>();
     private final HashMap<UUID, Double> worlds = new HashMap<>();
     private final HashMap<Material, Double> materials = new HashMap<>();
-
     private final HashMap<String, Double> customMaterials = new HashMap<>(), customTools = new HashMap<>();
 
     public MultiplierGroup(String identifier) {
@@ -51,27 +48,6 @@ public class MultiplierGroup {
                 Locale.log("&cInvalid entry (" + entry + "), skipping.");
             } catch (NullPointerException e) {
                 Locale.log("&cWorld cannot be found (" + entry + "), skipping.");
-            }
-        }
-        if(!ItemsAdderHook.isEnabled()) return;
-        Configuration itemsAdderFile = new Configuration(Econoblocks.getInstance());
-        itemsAdderFile.load("hooks/ItemsAdder");
-        for(String entry : itemsAdderFile.getConfiguration().getStringList("multipliers." + identifier + ".blocks")) {
-            try {
-                String material = entry.substring(0, entry.indexOf(' '));
-                double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
-                customMaterials.put(material, multiplier);
-            } catch (IndexOutOfBoundsException e) {
-                Locale.log("&cInvalid entry (" + entry + "), skipping.");
-            }
-        }
-        for(String entry : itemsAdderFile.getConfiguration().getStringList("multipliers." + identifier + ".tools")) {
-            try {
-                String material = entry.substring(0, entry.indexOf(' '));
-                double multiplier = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
-                customTools.put(material, multiplier);
-            } catch (IndexOutOfBoundsException e) {
-                Locale.log("&cInvalid entry (" + entry + "), skipping.");
             }
         }
     }
@@ -123,6 +99,21 @@ public class MultiplierGroup {
      */
     public HashMap<String, Double> getCustomTools() {
         return customTools;
+    }
+
+    /*
+     * Sets the weight of the group.
+     */
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
+
+    public void addCustomMaterialMultiplier(String material, double multiplierValue) {
+        customMaterials.put(material, multiplierValue);
+    }
+
+    public void addCustomToolMultiplier(String material, double multiplierValue) {
+        customTools.put(material, multiplierValue);
     }
 
 }
