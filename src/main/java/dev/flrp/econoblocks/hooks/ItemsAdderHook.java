@@ -5,7 +5,9 @@ import dev.flrp.econoblocks.configuration.Configuration;
 import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.listeners.ItemsAdderListeners;
 import dev.flrp.econoblocks.utils.block.Reward;
+import dev.flrp.econoblocks.utils.multiplier.MultiplierGroup;
 import dev.lone.itemsadder.api.CustomStack;
+import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
@@ -39,11 +41,10 @@ public class ItemsAdderHook implements Listener {
         itemsAdderFile.load("hooks/ItemsAdder");
 
         // Initial build
+        // Builds both the mob list and the multiplier groups.
         if(itemsAdderFile.getConfiguration().getConfigurationSection("multipliers") == null) {
-            itemsAdderFile.getConfiguration().createSection("multipliers.example.blocks");
-            itemsAdderFile.getConfiguration().set("multipliers.example.blocks.carved_wood_log", "1.2");
-            itemsAdderFile.getConfiguration().createSection("multipliers.example.tools");
-            itemsAdderFile.getConfiguration().set("multipliers.example.tools.emerald_pickaxe", "1.2");
+            itemsAdderFile.getConfiguration().set("multipliers.example.blocks", new ArrayList<>(Collections.singletonList("carved_wood_block 1.2")));
+            itemsAdderFile.getConfiguration().set("multipliers.example.tools", new ArrayList<>(Collections.singletonList("emerald_pickaxe 1.2")));
             itemsAdderFile.save();
         }
         if(itemsAdderFile.getConfiguration().getConfigurationSection("blocks") == null) {
@@ -52,7 +53,7 @@ public class ItemsAdderHook implements Listener {
             itemsAdderFile.save();
         }
 
-        // Reward creation
+        // Reward creation for ItemsAdder blocks.
         Set<String> blockSet = itemsAdderFile.getConfiguration().getConfigurationSection("blocks").getKeys(false);
         for(String block : blockSet) {
             Reward reward = new Reward();
@@ -65,7 +66,50 @@ public class ItemsAdderHook implements Listener {
             }
             itemsAdderBlocks.put(block, reward);
         }
+
+        // Adding multipliers to groups
+        Set<String> multiplierSet = itemsAdderFile.getConfiguration().getConfigurationSection("multipliers").getKeys(false);
+        // Loop through all multipliers "groups" present in the ItemsAdder file.
+        for (String multiplier : multiplierSet) {
+
+            // Configuring an existing or new group.
+            // If the group already exists, we'll just get it.
+            // If it doesn't, we'll create it and add it to the manager. This allows groups to be purely for ItemsAdder blocks/items.
+            MultiplierGroup multiplierGroup;
+            if(instance.getMultiplierManager().isMultiplierGroup(multiplier)) {
+                multiplierGroup = instance.getMultiplierManager().getMultiplierGroup(multiplier);
+            } else {
+                multiplierGroup = new MultiplierGroup(multiplier);
+                int weight = itemsAdderFile.getConfiguration().contains("multipliers." + multiplier + ".weight") ? itemsAdderFile.getConfiguration().getInt("multipliers." + multiplier + ".weight") : 0;
+                multiplierGroup.setWeight(weight);
+                instance.getMultiplierManager().addMultiplierGroup(multiplier, multiplierGroup);
+            }
+
+            // Getting both material and tool multipliers and adding to group.
+            for(String entry : itemsAdderFile.getConfiguration().getStringList("multipliers." + multiplier + ".blocks")) {
+                try {
+                    String material = entry.substring(0, entry.indexOf(' '));
+                    double multiplierValue = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
+                    multiplierGroup.addCustomMaterialMultiplier(material, multiplierValue);
+                } catch (IndexOutOfBoundsException e) {
+                    Locale.log("&cInvalid entry (" + entry + "), skipping.");
+                }
+            }
+            for(String entry : itemsAdderFile.getConfiguration().getStringList("multipliers." + multiplier + ".tools")) {
+                try {
+                    String material = entry.substring(0, entry.indexOf(' '));
+                    double multiplierValue = NumberUtils.toDouble(entry.substring(entry.indexOf(' ')));
+                    multiplierGroup.addCustomToolMultiplier(material, multiplierValue);
+                } catch (IndexOutOfBoundsException e) {
+                    Locale.log("&cInvalid entry (" + entry + "), skipping.");
+                }
+            }
+
+        }
+
+        Locale.log("Loaded &e" + multiplierSet.size() + " &rItemsAdder multipliers.");
         Locale.log("Loaded &e" + itemsAdderBlocks.size() + " &rItemsAdder blocks.");
+
     }
 
     // Methods
