@@ -1,7 +1,12 @@
-# Configuration of Econoblocks. For help, visit https://docs.axelli.net/
+# Configuration of Econoblocks. For help, visit https://wiki.flrp.dev/
 config-version: 5
 
+# Allow the plugin to check for updates?
 check-for-updates: true
+
+# What currency should the plugin use?
+# Current list: VAULT (Default), PLAYER_POINTS, TOKEN_MANAGER
+economy: VAULT
 
 # Gamemode settings.
 gamemode:

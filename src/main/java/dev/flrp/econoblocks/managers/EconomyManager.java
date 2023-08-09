@@ -4,7 +4,7 @@ import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.api.events.BlockGiveEconomyEvent;
 import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.hooks.ItemsAdderHook;
-import dev.flrp.econoblocks.hooks.VaultHook;
+import dev.flrp.econoblocks.hooks.economy.*;
 import dev.flrp.econoblocks.utils.Methods;
 import dev.flrp.econoblocks.utils.multiplier.MultiplierGroup;
 import dev.flrp.econoblocks.utils.multiplier.MultiplierProfile;
@@ -20,13 +20,18 @@ public class EconomyManager {
 
     private final Econoblocks plugin;
 
+    private EconomyType economy;
+    private EconomyProvider economyProvider;
+
     public EconomyManager(Econoblocks plugin) {
         this.plugin = plugin;
+        Locale.log("Starting to register hooks. Please wait.");
+        setupEconomy();
     }
 
     public void handleCustomBlockDeposit(Player player, Block block, String blockName) {
         // Check if player has balance.
-        if(!VaultHook.hasAccount(player)) VaultHook.createAccount(player);
+        if(!economyProvider.hasAccount(player)) economyProvider.createAccount(player);
 
         // Multiplier Variables
         ItemStack itemStack = Methods.itemInHand(player);
@@ -59,7 +64,7 @@ public class EconomyManager {
 
         // Distribution
         if(result == 0) return;
-        VaultHook.deposit(player, result);
+        economyProvider.deposit(player, result);
 
         // Message
         if(!plugin.getConfig().getBoolean("message.enabled")) return;
@@ -71,7 +76,7 @@ public class EconomyManager {
     public void handleDeposit(Player player, Block block) {
         try {
             // Check if player has balance.
-            if(!VaultHook.hasAccount(player)) VaultHook.createAccount(player);
+            if(!economyProvider.hasAccount(player)) economyProvider.createAccount(player);
 
             // Multiplier Variables
             Material material = block.getType();
@@ -107,7 +112,7 @@ public class EconomyManager {
 
             // Distribution
             if(result == 0) return;
-            VaultHook.deposit(player, result);
+            economyProvider.deposit(player, result);
 
             // Message
             if(!plugin.getConfig().getBoolean("message.enabled")) return;
@@ -172,6 +177,37 @@ public class EconomyManager {
         }
 
         return multiplier;
+    }
+
+    private void setupEconomy() {
+        if (!plugin.getConfig().contains("economy") || EconomyType.getByName(plugin.getConfig().getString("economy")) == null) {
+            Locale.log("Invalid or unspecified economy type, defaulting to Vault.");
+            economy = EconomyType.VAULT;
+            economyProvider = new VaultEconomy();
+        }
+        economy = EconomyType.getByName(plugin.getConfig().getString("economy"));
+        switch (economy) {
+            case TOKEN_MANAGER:
+                economyProvider = new TokenManagerEconomy();
+                break;
+            case PLAYER_POINTS:
+                economyProvider = new PlayerPointsEconomy();
+                break;
+            case VAULT:
+                economyProvider = new VaultEconomy();
+                break;
+            default:
+                Locale.log("Unrecognized economy type, defaulting to Vault.");
+                economyProvider = new VaultEconomy(); // Provide a default EconomyProvider (VaultEconomy in this case)
+        }
+    }
+
+    public EconomyProvider getEconomyProvider() {
+        return economyProvider;
+    }
+
+    public EconomyType getEconomyType() {
+        return economy;
     }
 
 }

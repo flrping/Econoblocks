@@ -2,6 +2,7 @@ package dev.flrp.econoblocks.managers;
 
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.configuration.Locale;
+import dev.flrp.econoblocks.hooks.economy.EconomyType;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
@@ -27,7 +28,8 @@ public class MessageManager {
     }
 
     public void sendMessage(Player player, Block block, double base, double result, double multiplier) {
-        String economyGiven = Locale.ECONOMY_GIVEN.replace("{0}", String.valueOf(result)).replace("{1}", String.valueOf(base)).replace("{2}", String.valueOf(multiplier));
+        String num = (plugin.getEconomyManager().getEconomyType() != EconomyType.VAULT) ? String.valueOf((int) Math.round(result)) : String.valueOf(result);
+        String economyGiven = Locale.ECONOMY_GIVEN.replace("{0}", num).replace("{1}", String.valueOf(base)).replace("{2}", String.valueOf(multiplier));
         switch(messageType) {
             case CHAT:
                 player.sendMessage(Locale.parse(Locale.PREFIX + economyGiven));

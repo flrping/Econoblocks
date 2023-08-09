@@ -40,7 +40,7 @@ public final class Econoblocks extends JavaPlugin {
 
         Locale.log("&8--------------");
         Locale.log("&eEconoblocks &rby flrp &8(&ev " + this.getDescription().getVersion() + "&8)");
-        Locale.log("Consider &cPatreon &rto support me for keeping these plugins free.");
+        Locale.log("Consider &cKo-fi &rto support me for keeping these plugins free.");
         Locale.log("&8--------------");
         Locale.log("&eStarting...");
 

@@ -3,7 +3,6 @@ package dev.flrp.econoblocks.managers;
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.hooks.ItemsAdderHook;
-import dev.flrp.econoblocks.hooks.VaultHook;
 
 public class HookManager {
 
@@ -17,7 +16,6 @@ public class HookManager {
     }
 
     private void load() {
-        VaultHook.register();
         ItemsAdderHook.register();
     }
 

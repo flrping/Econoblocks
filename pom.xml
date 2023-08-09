@@ -6,7 +6,7 @@
 
     <groupId>dev.flrp</groupId>
     <artifactId>Econoblocks</artifactId>
-    <version>1.4.2</version>
+    <version>1.5.0</version>
     <packaging>jar</packaging>
 
     <name>Econoblocks</name>
@@ -36,11 +36,11 @@
                     <relocations>
                         <relocation>
                             <pattern>me.mattstudios.mf</pattern>
-                            <shadedPattern>dev.flrp.econoblocks</shadedPattern>
+                            <shadedPattern>dev.flrp.utils.cmds</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.bstats</pattern>
-                            <shadedPattern>dev.flrp.econoblocks</shadedPattern>
+                            <shadedPattern>dev.flrp.utils.bstats</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
@@ -83,6 +83,10 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>rosewood-repo</id>
+            <url>https://repo.rosewooddev.io/repository/public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -113,6 +117,25 @@
             <groupId>com.github.LoneDev6</groupId>
             <artifactId>api-itemsadder</artifactId>
             <version>3.2.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.Realizedd</groupId>
+            <artifactId>TokenManager</artifactId>
+            <version>3.2.8</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/TokenManager.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.black_ixx</groupId>
+            <artifactId>playerpoints</artifactId>
+            <version>3.2.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
