@@ -3,15 +3,35 @@ version: ${project.version}
 main: dev.flrp.econoblocks.Econoblocks
 api-version: 1.13
 depend: [ Vault ]
-softdepend: [ Essentials, EconomyX, CMI, Multiverse-Core, ItemsAdder ]
+softdepend: [ Essentials, EconomyX, CMI, Multiverse-Core, ItemsAdder, Oraxen, DecentHolograms, MMOItems, PlaceholderAPI ]
 authors: [ flrp ]
 description: A plugin that rewards players for mining blocks
 commands:
-  econoblocks:
-    description: Brings up a help menu.
-    default: true
-    usage: /econoblocks
+  help:
+    description: Displays a help message.
+    usage: /econoblocks help
 permissions:
-  econoblocks.admin:
-    description: Gives player access to admin commands.
+  econoblocks.toggle:
+    description: Gives permission for toggling messages.
+    default: true
+  econoblocks.profile:
+    description: Gives permission for checking a players profile.
     default: op
+  econoblocks.check:
+    description: Gives permission for checking a blocks info.
+    default: op
+  econoblocks.multiplier:
+    description: Gives permission for setting a multiplier.
+    default: op
+  econoblocks.reload:
+    description: Gives permission for reloading the plugin.
+    default: op
+  econoblocks.admin:
+    description: Gives permission for all admin-like commands.
+    default: op
+    children:
+      econoblocks.toggle: true
+      econoblocks.profile: true
+      econoblocks.check: true
+      econoblocks.multiplier: true
+      econoblocks.reload: true
