@@ -1,41 +1,77 @@
-# Format - "<amount> (chance)"
-# Setting a chance is completely optional. Leaving it blank will set it to 100%.
 blocks:
   COAL_ORE:
-  - '10'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_COAL_ORE:
-  - '10'
+    tables:
+      '1':
+        table: money_table
   COPPER_ORE:
-  - '10'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_COPPER_ORE:
-  - '10'
+    tables:
+      '1':
+        table: money_table
   IRON_ORE:
-  - '10'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_IRON_ORE:
-  - '10'
+    tables:
+      '1':
+        table: money_table
   GOLD_ORE:
-  - '100 30'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_GOLD_ORE:
-  - '100 30'
+    tables:
+      '1':
+        table: money_table
   REDSTONE_ORE:
-  - '50 30'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_REDSTONE_ORE:
-  - '50 30'
+    tables:
+      '1':
+        table: money_table
   LAPIS_ORE:
-  - '50 30'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_LAPIS_ORE:
-  - '50 30'
+    tables:
+      '1':
+        table: money_table
   DIAMOND_ORE:
-  - '100 20'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_DIAMOND_ORE:
-  - '100 20'
+    tables:
+      '1':
+        table: money_table
   EMERALD_ORE:
-  - '200 10'
+    tables:
+      '1':
+        table: money_table
   DEEPSLATE_EMERALD_ORE:
-  - '200 10'
+    tables:
+      '1':
+        table: money_table
   NETHER_QUARTZ_ORE:
-  - '10'
+    tables:
+      '1':
+        table: money_table
   NETHER_GOLD_ORE:
-  - '20 30'
+    tables:
+      '1':
+        table: money_table
   ANCIENT_DEBRIS:
-  - '200 20'
+    tables:
+      '1':
+        table: money_table

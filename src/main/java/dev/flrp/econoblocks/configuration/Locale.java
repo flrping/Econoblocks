@@ -15,6 +15,9 @@ public class Locale {
     public static String PREFIX;
     public static String COMMAND_DENIED;
     public static String ECONOMY_GIVEN;
+    public static String ITEM_GIVEN;
+    public static String POTION_GIVEN;
+    public static String COMMAND_GIVEN;
     public static String ECONOMY_MAX;
     public static String ECONOMY_TOGGLE;
 
@@ -23,6 +26,9 @@ public class Locale {
         PREFIX = addMessage("prefix");
         COMMAND_DENIED = addMessage("command-denied");
         ECONOMY_GIVEN = addMessage("economy-given");
+        ITEM_GIVEN = addMessage("item-given");
+        POTION_GIVEN = addMessage("potion-given");
+        COMMAND_GIVEN = addMessage("command-given");
         ECONOMY_MAX = addMessage("economy-max");
         ECONOMY_TOGGLE = addMessage("economy-toggle");
 

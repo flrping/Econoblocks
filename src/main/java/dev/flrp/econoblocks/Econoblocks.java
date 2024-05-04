@@ -1,14 +1,25 @@
 package dev.flrp.econoblocks;
 
-import dev.flrp.econoblocks.commands.Commands;
-import dev.flrp.econoblocks.configuration.Configuration;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import dev.flrp.econoblocks.command.Commands;
+import dev.flrp.econoblocks.configuration.Builder;
 import dev.flrp.econoblocks.configuration.Locale;
-import dev.flrp.econoblocks.listeners.BlockListeners;
-import dev.flrp.econoblocks.listeners.ChunkListeners;
-import dev.flrp.econoblocks.managers.*;
-import dev.flrp.econoblocks.utils.UpdateChecker;
-import me.mattstudios.mf.base.CommandManager;
+import dev.flrp.econoblocks.listener.BlockListener;
+import dev.flrp.econoblocks.listener.ChunkListener;
+import dev.flrp.econoblocks.manager.*;
+import dev.flrp.econoblocks.module.BlockModule;
+import dev.flrp.econoblocks.module.EconomyModule;
+import dev.flrp.econoblocks.module.HologramModule;
+import dev.flrp.econoblocks.module.ItemModule;
+import dev.flrp.econoblocks.placeholder.EconoblocksExpansion;
+import dev.flrp.econoblocks.util.UpdateChecker;
+import dev.flrp.espresso.configuration.Configuration;
+import dev.triumphteam.cmd.bukkit.BukkitCommandManager;
+import dev.triumphteam.cmd.bukkit.message.BukkitMessageKey;
+import dev.triumphteam.cmd.core.message.MessageKey;
 import org.bstats.bukkit.Metrics;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -19,14 +30,13 @@ import java.util.UUID;
 public final class Econoblocks extends JavaPlugin {
 
     private static Econoblocks instance;
-    private final int resourceID = 91161;
 
     private Configuration config;
     private Configuration blocks;
+    private Configuration lootTables;
     private Configuration language;
 
-    private BlockManager blockManager;
-    private EconomyManager economyManager;
+    private RewardManager rewardManager;
     private MessageManager messageManager;
     private DatabaseManager databaseManager;
     private HookManager hookManager;
@@ -39,7 +49,7 @@ public final class Econoblocks extends JavaPlugin {
         instance = this;
 
         Locale.log("&8--------------");
-        Locale.log("&eEconoblocks &rby flrp &8(&ev " + this.getDescription().getVersion() + "&8)");
+        Locale.log("&eEconoblocks &rby flrp &8(&ev" + this.getDescription().getVersion() + "&8)");
         Locale.log("Consider &cKo-fi &rto support me for keeping these plugins free.");
         Locale.log("&8--------------");
         Locale.log("&eStarting...");
@@ -54,7 +64,12 @@ public final class Econoblocks extends JavaPlugin {
         Locale.load();
         initiateClasses();
 
+        // Modules
+        Injector hookInjector = Guice.createInjector(new BlockModule(this), new EconomyModule(this), new HologramModule(this), new ItemModule(this));
+        hookManager = hookInjector.getInstance(HookManager.class);
+
         // Check for update
+        int resourceID = 91161;
         new UpdateChecker(this, resourceID).checkForUpdate(version -> {
             if(getConfig().getBoolean("check-for-updates")) {
                 if (!this.getDescription().getVersion().equalsIgnoreCase(version)) {
@@ -69,20 +84,24 @@ public final class Econoblocks extends JavaPlugin {
         // Hooks
         File dir = new File(getDataFolder(), "hooks");
         if(!dir.exists()) dir.mkdir();
-        hookManager = new HookManager(this);
 
         // Database things
         databaseManager = new DatabaseManager(this);
 
         // Listeners
-        getServer().getPluginManager().registerEvents(new BlockListeners(this), this);
-        getServer().getPluginManager().registerEvents(new ChunkListeners(this), this);
+        getServer().getPluginManager().registerEvents(new BlockListener(this), this);
+        getServer().getPluginManager().registerEvents(new ChunkListener(this), this);
 
         // Commands
-        CommandManager commandManager = new CommandManager(this);
-        commandManager.register(new Commands(this));
-        commandManager.getMessageHandler().register("cmd.no.permission", sender -> sender.sendMessage(Locale.parse(Locale.COMMAND_DENIED)));
-        commandManager.getMessageHandler().register("cmd.wrong.usage", sender -> sender.sendMessage(Locale.parse(Locale.PREFIX + "&cInvalid usage. See /econoblocks.")));
+        BukkitCommandManager<CommandSender> commandManager = BukkitCommandManager.create(this);
+        commandManager.registerCommand(new Commands(this));
+        commandManager.registerMessage(BukkitMessageKey.NO_PERMISSION, (sender, context) -> sender.sendMessage(Locale.parse(Locale.PREFIX + Locale.COMMAND_DENIED)));
+        commandManager.registerMessage(MessageKey.NOT_ENOUGH_ARGUMENTS, (sender, context) -> sender.sendMessage(Locale.parse(Locale.PREFIX + "&cInvalid usage. See /econoblocks.")));
+
+        // Placeholder
+        if(getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new EconoblocksExpansion(this).register();
+        }
 
         Locale.log("&eDone!");
     }
@@ -98,7 +117,9 @@ public final class Econoblocks extends JavaPlugin {
         initiateClasses();
 
         // Hooks
-        hookManager.reload();
+        hookManager.getBlockProviders().forEach(provider -> {
+            ((Builder) provider).reload();
+        });
 
         Locale.log("&eDone!");
     }
@@ -109,35 +130,32 @@ public final class Econoblocks extends JavaPlugin {
     }
 
     private void initiateClasses() {
-        blockManager = new BlockManager(this);
-        economyManager = new EconomyManager(this);
+        rewardManager = new RewardManager(this);
         messageManager = new MessageManager(this);
         multiplierManager = new MultiplierManager(this);
     }
 
     private void initiateFiles() {
-        config = new Configuration(this);
-        config.load("config");
-        blocks = new Configuration(this);
-        blocks.load("blocks");
-        language = new Configuration(this);
-        language.load("language");
+        config = new Configuration(this, "config");
+        blocks = new Configuration(this, "blocks");
+        language = new Configuration(this, "language");
+        lootTables = new Configuration(this, "loot");
     }
 
     public Configuration getBlocks() {
         return blocks;
     }
 
+    public Configuration getLootTables() {
+        return lootTables;
+    }
+
     public Configuration getLanguage() {
         return language;
     }
 
-    public BlockManager getBlockManager() {
-        return blockManager;
-    }
-
-    public EconomyManager getEconomyManager() {
-        return economyManager;
+    public RewardManager getRewardManager() {
+        return rewardManager;
     }
 
     public MessageManager getMessageManager() {
