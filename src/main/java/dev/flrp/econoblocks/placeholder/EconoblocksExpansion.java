@@ -88,10 +88,10 @@ public class EconoblocksExpansion extends PlaceholderExpansion {
         return "1.0";
     }
 
-    private String requestToolPlaceholder(String subject, MultiplierProfile profile, MultiplierGroup group) {
+    private String requestToolPlaceholder(String value, MultiplierProfile profile, MultiplierGroup group) {
         Material material = null;
         try {
-            material = Material.valueOf(subject.toUpperCase());
+            material = Material.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException ignored) {}
         if(material != null) {
             if(profile.getTools().containsKey(material)) {
@@ -101,27 +101,26 @@ public class EconoblocksExpansion extends PlaceholderExpansion {
                 return group.getTools().get(material).toString();
             }
         } else {
-            if(profile.getCustomTools().containsKey(subject)) {
-                return profile.getCustomTools().get(subject).toString();
+            if(profile.getCustomTools().containsKey(value)) {
+                return profile.getCustomTools().get(value).toString();
             } else
-            if(group != null && group.getCustomTools().containsKey(subject)) {
-                return group.getCustomTools().get(subject).toString();
+            if(group != null && group.getCustomTools().containsKey(value)) {
+                return group.getCustomTools().get(value).toString();
             }
         }
         return "1.0";
     }
 
-    private String requestWorldPlaceholder(String subject, MultiplierProfile profile, MultiplierGroup group) {
-        try {
-            if(Bukkit.getWorld(UUID.fromString(subject)) != null) {
-                if(profile.getWorlds().containsKey(UUID.fromString(subject))) {
-                    return profile.getWorlds().get(UUID.fromString(subject)).toString();
-                } else
-                if(group != null && group.getWorlds().containsKey(UUID.fromString(subject))) {
-                    return group.getWorlds().get(UUID.fromString(subject)).toString();
-                }
+    private String requestWorldPlaceholder(String value, MultiplierProfile profile, MultiplierGroup group) {
+        if(Bukkit.getWorld(value) != null) {
+            UUID world = Bukkit.getWorld(value).getUID();
+            if(profile.getWorlds().containsKey(world)) {
+                return String.valueOf(profile.getWorlds().get(world));
+            } else
+            if(group != null && group.getWorlds().containsKey(world)) {
+                return String.valueOf(group.getWorlds().get(world));
             }
-        } catch (IllegalArgumentException ignored) {}
+        }
         return "1.0";
     }
 
