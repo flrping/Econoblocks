@@ -458,8 +458,9 @@ public class RewardManager {
     private void handleEconomyReward(Player player, Block block, LootableEconomy loot, LootResult result, String blockName) {
         MultiplierProfile profile = plugin.getMultiplierManager().getMultiplierProfile(player.getUniqueId());
         double multiplier = calculateMultiplier(player, block, profile, blockName);
-        double base = result.getAmount();
-
+        double min = loot.getMin();
+        double max = loot.getMax();
+        double base = min + (max - min) * Math.random();
         result.setAmount(base);
 
         double amount = base * multiplier;
