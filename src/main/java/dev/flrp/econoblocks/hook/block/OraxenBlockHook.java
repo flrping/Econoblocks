@@ -51,8 +51,10 @@ public class OraxenBlockHook extends OraxenBlockProvider implements Builder {
         Configuration oraxenFile = new Configuration(plugin, "hooks/Oraxen");
         oraxenFile.load();
 
+        List<String> blockNames = new ArrayList<>(getCustomBlockNames());
+
         Methods.buildHookMultipliersBlocks(oraxenFile);
-        Methods.buildHookBlocks(oraxenFile);
+        Methods.buildHookBlocks(oraxenFile, blockNames);
         Methods.buildHookMultiplierGroupsBlocks(oraxenFile);
         Methods.buildRewardList(oraxenFile, oraxenRewards, "Oraxen");
         Methods.buildDefaultLootContainer(oraxenFile, defaultLootContainer, excludedMaterials);

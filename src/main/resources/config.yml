@@ -4,6 +4,9 @@ config-version: 6
 # Allow the plugin to check for updates?
 check-for-updates: true
 
+# Let the given rewards drop on the ground? Only works for item rewards.
+drop-on-ground: false
+
 # Gamemode settings.
 gamemode:
   # Should people in creative mode get rewards?

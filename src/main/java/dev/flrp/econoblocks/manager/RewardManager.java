@@ -13,6 +13,7 @@ import dev.flrp.espresso.util.LootUtils;
 import dev.flrp.espresso.util.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
@@ -501,7 +502,13 @@ public class RewardManager {
         Bukkit.getPluginManager().callEvent(event);
         if(event.isCancelled()) return;
 
-        plugin.getHookManager().getItemProvider(loot.getItemType()).giveItem(player, loot.getCustomItemName(), (int) result.getAmount());
+        if(plugin.getConfig().contains("drop-on-ground") && plugin.getConfig().getBoolean("drop-on-ground")) {
+            ItemStack item = plugin.getHookManager().getItemProvider(loot.getItemType()).getItemStack(loot.getCustomItemName());
+            item.setAmount((int) result.getAmount());
+            block.getWorld().dropItemNaturally(block.getLocation(), item);
+        } else {
+            plugin.getHookManager().getItemProvider(loot.getItemType()).giveItem(player, loot.getCustomItemName(), (int) result.getAmount());
+        }
         if(!plugin.getToggleList().contains(player.getUniqueId()))
             plugin.getMessageManager().sendMessage(player, block, result, blockName);
     }
@@ -513,7 +520,11 @@ public class RewardManager {
 
         ItemStack item = loot.getItemStack();
         item.setAmount((int) result.getAmount());
-        player.getInventory().addItem(item);
+        if(plugin.getConfig().contains("drop-on-ground") && plugin.getConfig().getBoolean("drop-on-ground")) {
+            block.getWorld().dropItemNaturally(block.getLocation(), item);
+        } else {
+            player.getInventory().addItem(loot.getItemStack());
+        }
         if(!plugin.getToggleList().contains(player.getUniqueId()))
             plugin.getMessageManager().sendMessage(player, block, result, blockName);
     }
