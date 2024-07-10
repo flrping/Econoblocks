@@ -51,8 +51,10 @@ public class ItemsAdderBlockHook extends ItemsAdderBlockProvider implements Buil
         Configuration itemsAdderFile = new Configuration(plugin, "hooks/ItemsAdder");
         itemsAdderFile.load();
 
+        List<String> blockNames = new ArrayList<>(getCustomBlockNames());
+
         Methods.buildHookMultipliersBlocks(itemsAdderFile);
-        Methods.buildHookBlocks(itemsAdderFile);
+        Methods.buildHookBlocks(itemsAdderFile, blockNames);
         Methods.buildHookMultiplierGroupsBlocks(itemsAdderFile);
         Methods.buildRewardList(itemsAdderFile, itemsAdderRewards, "ItemsAdder");
         Methods.buildDefaultLootContainer(itemsAdderFile, defaultLootContainer, excludedMaterials);
