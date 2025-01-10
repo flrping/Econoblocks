@@ -502,6 +502,9 @@ public class RewardManager {
         Bukkit.getPluginManager().callEvent(event);
         if(event.isCancelled()) return;
 
+        ItemProvider itemProvider = plugin.getHookManager().getItemProvider(loot.getItemType());
+        if (itemProvider == null) return;
+
         if(plugin.getConfig().contains("drop-on-ground") && plugin.getConfig().getBoolean("drop-on-ground")) {
             ItemStack item = plugin.getHookManager().getItemProvider(loot.getItemType()).getItemStack(loot.getCustomItemName());
             item.setAmount((int) result.getAmount());

@@ -58,6 +58,8 @@ hooks:
     ItemsAdder: true
     # Enable Oraxen support? This adds the ability to earn money from custom blocks.
     Oraxen: true
+    # Enable Nexo support? This adds the ability to earn money from custom blocks.
+    Nexo: true
   item:
     # Enable ItemsAdder support? This adds the ability to have multipliers for custom items.
     ItemsAdder: true
@@ -65,6 +67,8 @@ hooks:
     Oraxen: true
     # Enable MMOItems support? This adds the ability to have multipliers for custom items.
     MMOItems: true
+    # Enable Nexo support? This adds the ability to have multipliers for custom items.
+    Nexo: true
 
 # Multiplier handling.
 # Down below are configurable multiplier groups.

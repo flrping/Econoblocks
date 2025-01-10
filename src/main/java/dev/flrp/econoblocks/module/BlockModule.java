@@ -4,9 +4,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.hook.block.ItemsAdderBlockHook;
+import dev.flrp.econoblocks.hook.block.NexoBlockHook;
 import dev.flrp.econoblocks.hook.block.OraxenBlockHook;
 import dev.flrp.espresso.hook.block.BlockProvider;
 import dev.flrp.espresso.hook.block.ItemsAdderBlockProvider;
+import dev.flrp.espresso.hook.block.NexoBlockProvider;
 import dev.flrp.espresso.hook.block.OraxenBlockProvider;
 
 public class BlockModule extends AbstractModule {
@@ -32,6 +34,12 @@ public class BlockModule extends AbstractModule {
             OraxenBlockHook oraxenBlockHook = new OraxenBlockHook(plugin);
             blockProviderMultibinder.addBinding().toInstance(oraxenBlockHook);
             bind(OraxenBlockProvider.class).toInstance(oraxenBlockHook);
+        }
+        if(plugin.getConfig().getBoolean("hooks.block.Nexo") && plugin.getServer().getPluginManager().isPluginEnabled("Nexo")) {
+            plugin.getLogger().info("Hooking into Nexo Blocks.");
+            NexoBlockHook nexoBlockHook = new NexoBlockHook(plugin);
+            blockProviderMultibinder.addBinding().toInstance(nexoBlockHook);
+            bind(NexoBlockProvider.class).toInstance(nexoBlockHook);
         }
     }
 
