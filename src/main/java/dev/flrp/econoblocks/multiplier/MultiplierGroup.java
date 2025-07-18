@@ -1,4 +1,4 @@
-package dev.flrp.econoblocks.util.multiplier;
+package dev.flrp.econoblocks.multiplier;
 
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.configuration.Locale;

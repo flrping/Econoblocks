@@ -3,17 +3,15 @@ package dev.flrp.econoblocks.manager;
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.api.event.BlockRewardEvent;
 import dev.flrp.econoblocks.configuration.Locale;
-import dev.flrp.econoblocks.util.multiplier.MultiplierGroup;
-import dev.flrp.econoblocks.util.multiplier.MultiplierProfile;
+import dev.flrp.econoblocks.multiplier.MultiplierGroup;
+import dev.flrp.econoblocks.multiplier.MultiplierProfile;
 import dev.flrp.espresso.condition.*;
 import dev.flrp.espresso.hook.item.ItemProvider;
 import dev.flrp.espresso.hook.item.ItemType;
 import dev.flrp.espresso.table.*;
 import dev.flrp.espresso.util.LootUtils;
-import dev.flrp.espresso.util.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
@@ -462,6 +460,23 @@ public class RewardManager {
         double min = loot.getMin();
         double max = loot.getMax();
         double base = min + (max - min) * Math.random();
+
+        boolean allowDecimals = plugin.getConfig().getBoolean("rewards.economy.allow-decimals", true);
+        String roundMode = plugin.getConfig().getString("rewards.economy.round-mode", "NEAREST").toUpperCase();
+        if (!allowDecimals) {
+            switch (roundMode) {
+                case "CEIL":
+                    base = Math.ceil(base);
+                    break;
+                case "FLOOR":
+                    base = Math.floor(base);
+                    break;
+                case "NEAREST":
+                default:
+                    base = Math.round(base);
+                    break;
+            }
+        }
         result.setAmount(base);
 
         double amount = base * multiplier;

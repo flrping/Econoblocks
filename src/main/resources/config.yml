@@ -12,6 +12,29 @@ gamemode:
   # Should people in creative mode get rewards?
   creative-rewards: false
 
+# Database handling.
+database:
+  # Which data provider should be used?
+  # Current list: SQLITE, MYSQL, MARIADB, POSTGRESQL
+  provider: SQLITE
+
+  # Credentials for the data provider. Only required for MYSQL, MARIADB, POSTGRESQL
+  host: localhost
+  port: 3306
+  database: econoblocks
+  username: username
+  password: password
+
+rewards:
+  economy:
+    # If enabled, economy loot with ranges will allow decimals. If disabled, they will be rounded.
+    allow-decimals: true
+    # Modes: CEIL, FLOOR, NEAREST
+    # CEIL - Rounds up to the nearest whole number.
+    # FLOOR - Rounds down to the nearest whole number.
+    # NEAREST - Rounds to the nearest whole number.
+    round-mode: NEAREST
+
 # Message handling.
 message:
   # Should the plugin send messages about money gained?

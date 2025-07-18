@@ -2,8 +2,8 @@ package dev.flrp.econoblocks.manager;
 
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.configuration.Locale;
-import dev.flrp.econoblocks.util.multiplier.MultiplierGroup;
-import dev.flrp.econoblocks.util.multiplier.MultiplierProfile;
+import dev.flrp.econoblocks.multiplier.MultiplierGroup;
+import dev.flrp.econoblocks.multiplier.MultiplierProfile;
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 

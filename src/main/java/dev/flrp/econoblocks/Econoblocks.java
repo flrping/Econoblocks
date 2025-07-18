@@ -15,6 +15,7 @@ import dev.flrp.econoblocks.module.ItemModule;
 import dev.flrp.econoblocks.placeholder.EconoblocksExpansion;
 import dev.flrp.econoblocks.util.UpdateChecker;
 import dev.flrp.espresso.configuration.Configuration;
+import dev.flrp.espresso.storage.exception.ProviderException;
 import dev.triumphteam.cmd.bukkit.BukkitCommandManager;
 import dev.triumphteam.cmd.bukkit.message.BukkitMessageKey;
 import dev.triumphteam.cmd.core.message.MessageKey;
@@ -122,11 +123,17 @@ public final class Econoblocks extends JavaPlugin {
         });
 
         Locale.log("&eDone!");
+
+        databaseManager.refresh();
     }
 
     @Override
     public void onDisable() {
-        databaseManager.closeConnection();
+        try {
+            databaseManager.getStorageProvider().close();
+        } catch (ProviderException e) {
+            Locale.log("Unable to close the database. Error: " + e.getMessage());
+        }
     }
 
     private void initiateClasses() {

@@ -4,8 +4,8 @@ import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.configuration.Locale;
 import dev.flrp.econoblocks.hook.block.ItemsAdderBlockHook;
 import dev.flrp.econoblocks.hook.block.OraxenBlockHook;
-import dev.flrp.econoblocks.util.multiplier.MultiplierGroup;
-import dev.flrp.econoblocks.util.multiplier.MultiplierProfile;
+import dev.flrp.econoblocks.multiplier.MultiplierGroup;
+import dev.flrp.econoblocks.multiplier.MultiplierProfile;
 import dev.flrp.espresso.condition.BiomeCondition;
 import dev.flrp.espresso.condition.Condition;
 import dev.flrp.espresso.condition.WithConditionExtended;
@@ -56,6 +56,10 @@ public class Commands extends BaseCommand {
     @SubCommand("multiplier")
     @Permission("econoblocks.multiplier")
     public void multiplierCommand(final CommandSender sender, final List<String> args) {
+        if(!plugin.getDatabaseManager().getStorageProvider().isConnected()) {
+            send(sender, "&cDatabase is not connected so specific multipliers cannot be modified. Please check your configuration and /reload once fixed.");
+            return;
+        }
 
         String action = args.get(0);
         String player = args.get(1);

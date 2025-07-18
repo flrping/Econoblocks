@@ -2,187 +2,236 @@ package dev.flrp.econoblocks.manager;
 
 import dev.flrp.econoblocks.Econoblocks;
 import dev.flrp.econoblocks.configuration.Locale;
+import dev.flrp.econoblocks.multiplier.MultiplierProfile;
 import dev.flrp.econoblocks.util.chunk.ChunkLocation;
-import dev.flrp.econoblocks.util.multiplier.MultiplierProfile;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import dev.flrp.espresso.storage.behavior.SQLStorageBehavior;
+import dev.flrp.espresso.storage.exception.ProviderException;
+import dev.flrp.espresso.storage.provider.SQLStorageProvider;
+import dev.flrp.espresso.storage.provider.SQLiteStorageProvider;
+import dev.flrp.espresso.storage.provider.StorageType;
+import dev.flrp.espresso.storage.query.*;
+import org.bukkit.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DatabaseManager {
 
     private final Econoblocks plugin;
-    private Connection connection;
-
-    // Chunks
     private final Set<Location> blockCache = new HashSet<>(), rawCache = new HashSet<>();
-    private final HashMap<ChunkLocation, Set<Location>> chunkCache = new HashMap<>();
-
-    // Multipliers
-    private final HashMap<UUID, MultiplierProfile> playerCache = new HashMap<>();
+    private final Map<ChunkLocation, Set<Location>> chunkCache = new ConcurrentHashMap<>();
+    private final Map<UUID, MultiplierProfile> playerCache = new ConcurrentHashMap<>();
+    private StorageType storageType;
+    private SQLStorageProvider provider;
+    private SQLStorageBehavior behavior;
 
     public DatabaseManager(Econoblocks plugin) {
         this.plugin = plugin;
-        try {
-            // Finding sqlite
-            Class.forName("org.sqlite.JDBC");
-            Locale.log("&eSQLite &rfound. Unlocking database usage.");
+        connect();
+        init();
+    }
 
-            // Create connection
-            File databaseFile = new File(plugin.getDataFolder(), "database.db");
-            if(!databaseFile.exists()) {
-                databaseFile.createNewFile();
-            }
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databaseFile);
+    private void resolveStorageType() {
+        storageType = StorageType.getByName(plugin.getConfig().getString("database.provider"));
 
-            // Specific multiplier table
-            Statement multiplierTableStatement = connection.createStatement();
-            String createMultiplierTable = "CREATE TABLE IF NOT EXISTS multipliers (" +
-                    "user varchar(36) NOT NULL," +
-                    "context varchar NOT NULL," +
-                    "multiplier double NOT NULL," +
-                    "type varchar CHECK( type IN ('MATERIAL', 'TOOL', 'WORLD')) NOT NULL)";
-            multiplierTableStatement.executeUpdate(createMultiplierTable);
-            multiplierTableStatement.close();
-
-            // Handling specific multipliers
-            String MultiplierSql = "SELECT * FROM multipliers";
-            Statement multiplierStatement = connection.createStatement();
-            ResultSet  multiplierResultSet = multiplierStatement.executeQuery(MultiplierSql);
-            while (multiplierResultSet.next()) {
-                UUID uuid = UUID.fromString(multiplierResultSet.getString("user"));
-                MultiplierProfile mp = new MultiplierProfile(uuid);
-                playerCache.put(uuid, mp);
-
-                switch (multiplierResultSet.getString("type")) {
-                    case "MATERIAL":
-                        mp.getMaterials().put(Material.matchMaterial(multiplierResultSet.getString("context")),
-                                multiplierResultSet.getDouble("multiplier"));
-                        break;
-                    case "TOOL":
-                        mp.getTools().put(Material.matchMaterial(multiplierResultSet.getString("context")),
-                                multiplierResultSet.getDouble("multiplier"));
-                        break;
-                    case "WORLD":
-                        mp.getWorlds().put(UUID.fromString(multiplierResultSet.getString("context")),
-                                multiplierResultSet.getDouble("multiplier"));
-                        break;
-                    default:
-                }
-            }
-            multiplierStatement.close();
-            multiplierResultSet.close();
-
-            // Specific custom multiplier table
-            Statement customMultiplierTableStatement = connection.createStatement();
-            String createCustomMultiplierTable = "CREATE TABLE IF NOT EXISTS custom_multipliers (" +
-                    "user varchar(36) NOT NULL," +
-                    "context varchar NOT NULL," +
-                    "multiplier double NOT NULL," +
-                    "type varchar CHECK( type IN ('MATERIAL', 'TOOL')) NOT NULL)";
-            customMultiplierTableStatement.executeUpdate(createCustomMultiplierTable);
-            customMultiplierTableStatement.close();
-
-            // Handling specific custom multipliers
-            String customMultiplierSql = "SELECT * FROM custom_multipliers";
-            Statement customMultiplierStatement = connection.createStatement();
-            ResultSet  customMultiplierResultSet = customMultiplierStatement.executeQuery(customMultiplierSql);
-            while (customMultiplierResultSet.next()) {
-                UUID uuid = UUID.fromString(customMultiplierResultSet.getString("user"));
-                MultiplierProfile mp = playerCache.containsKey(uuid) ? playerCache.get(uuid) : new MultiplierProfile(uuid);
-                playerCache.put(uuid, mp);
-
-                switch (customMultiplierResultSet.getString("type")) {
-                    case "MATERIAL":
-                        mp.getCustomMaterials().put(customMultiplierResultSet.getString("context"),
-                                customMultiplierResultSet.getDouble("multiplier"));
-                        break;
-                    case "TOOL":
-                        mp.getCustomTools().put(customMultiplierResultSet.getString("context"),
-                                customMultiplierResultSet.getDouble("multiplier"));
-                        break;
-                    default:
-                }
-            }
-            customMultiplierStatement.close();
-            customMultiplierResultSet.close();
-
-            Locale.log("Loaded &e" + playerCache.size() + " &rmultiplier profiles from the database.");
-
-            // Stopping if owner wishes not to store block data.
-            if(!plugin.getConfig().getBoolean("checks.storage.enabled")) return;
-
-            // LOADING PLACED BLOCKS
-            // Block Table
-            Statement blockTableStatement = connection.createStatement();
-            String createBlockTable = "CREATE TABLE IF NOT EXISTS blocks (" +
-                    "w varchar(36) NOT NULL," +
-                    "x int NOT NULL," +
-                    "y int NOT NULL," +
-                    "z int NOT NULL," +
-                    "d date NOT NULL default(current_date))";
-            blockTableStatement.executeUpdate(createBlockTable);
-            blockTableStatement.close();
-
-            // Deleting entries
-            if(plugin.getConfig().getInt("checks.storage.expiry") > 0) {
-                Statement removeStatement = connection.createStatement();
-                String removeEntries = "DELETE FROM blocks WHERE d <= date('now', '-" + plugin.getConfig().getInt("checks.storage.expiry") + " day')";
-                removeStatement.executeUpdate(removeEntries);
-                removeStatement.close();
-            }
-
-            // Loading entries
-            String sql = "SELECT * FROM blocks;";
-            Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
-            while(rs.next()) {
-                // Making the location.
-                Location location = new Location(Bukkit.getWorld(UUID.fromString(rs.getString("w"))), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
-                // Checking if valid, mainly for servers with resource worlds.
-                if(location.getWorld() == null) continue;
-                // Find the location of the chunk and add to caches.
-                ChunkLocation chunkLocation = new ChunkLocation(location);
-                if(chunkCache.containsKey(chunkLocation)) {
-                    chunkCache.get(chunkLocation).add(location);
-                } else {
-                    Set<Location> locations = new HashSet<>();
-                    locations.add(location);
-                    chunkCache.put(chunkLocation, locations);
-                }
-                rawCache.add(location);
-            }
-            rs.close();
-            statement.close();
-            Locale.log("Loaded &e" + rawCache.size() + " &rstored blocks from the database.");
-
-        } catch (ClassNotFoundException e) {
-            Locale.log("&cCould not find SQLite, some features will not work.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            Locale.log("&cCould not create the database file.");
+        if (storageType == null || storageType == StorageType.NONE) {
+            Locale.log("Invalid storage type in config. Using default SQLite.");
+            storageType = StorageType.SQLITE;
         }
     }
 
-    // Block / Chunk
-    public Connection getConnection() {
-        return connection;
+    private void connect() {
+        resolveStorageType();
+
+        try {
+            switch (storageType) {
+                case YAML:
+                    throw new UnsupportedOperationException("YAML storage is not supported for this plugin.");
+                case JSON:
+                    throw new UnsupportedOperationException("JSON storage is not supported for this plugin.");
+                case SQLITE:
+                    File sqlite = new File(plugin.getDataFolder(), "database.db");
+                    if (!sqlite.exists()) {
+                        try {
+                            sqlite.createNewFile();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    provider = new SQLiteStorageProvider(plugin.getLogger(), sqlite);
+                    break;
+                default:
+                    provider = new SQLStorageProvider(
+                            plugin.getLogger(),
+                            plugin.getConfig().getString("database.host"),
+                            plugin.getConfig().getInt("database.port"),
+                            plugin.getConfig().getString("database.database"),
+                            plugin.getConfig().getString("database.username"),
+                            plugin.getConfig().getString("database.password"),
+                            storageType
+                    );
+            }
+
+            behavior = (SQLStorageBehavior) provider.getBehavior();
+            behavior.open();
+        } catch (Exception e) {
+            Locale.log("Unable to connect to the database: " + e.getMessage());
+            Locale.log("Storage-related features are disabled until fixed. When storage isn't connected, you can use /reload to try again.");
+        }
+    }
+
+    private void multiplierInit() {
+        List<SQLColumn> multiplierColumns = Arrays.asList(
+                new SQLColumn("user", SQLType.STRING).notNull(),
+                new SQLColumn("context", SQLType.STRING).notNull(),
+                new SQLColumn("multiplier", SQLType.DOUBLE).notNull(),
+                new SQLColumn("type", SQLType.STRING).notNull()
+                        .check("type IN ('MATERIAL', 'TOOL', 'WORLD')")
+        );
+        String createMultiplierTable = provider.getDialect().createTable("multipliers", multiplierColumns);
+        try {
+            behavior.query(createMultiplierTable);
+
+            SelectQueryBuilder selectMultipliers = new SelectQueryBuilder("multipliers", provider).columns("*");
+            behavior.queryMap(selectMultipliers.build(), rs -> {
+                UUID uuid = UUID.fromString(rs.getString("user"));
+                MultiplierProfile mp = playerCache.computeIfAbsent(uuid, MultiplierProfile::new);
+
+                String type = rs.getString("type");
+                switch (type) {
+                    case "MATERIAL":
+                        mp.getMaterials().put(Material.matchMaterial(rs.getString("context")), rs.getDouble("multiplier"));
+                        break;
+                    case "TOOL":
+                        mp.getTools().put(Material.matchMaterial(rs.getString("context")), rs.getDouble("multiplier"));
+                        break;
+                    case "WORLD":
+                        mp.getWorlds().put(UUID.fromString(rs.getString("context")), rs.getDouble("multiplier"));
+                        break;
+                }
+                return null;
+            });
+        } catch (ProviderException e) {
+            Locale.log("Unable to create/manage the multiplier table in the database: " + e.getMessage());
+        }
+    }
+
+    private void customMultiplierInit() {
+        List<SQLColumn> customMultiplierColumns = Arrays.asList(
+                new SQLColumn("user", SQLType.STRING).notNull(),
+                new SQLColumn("context", SQLType.STRING).notNull(),
+                new SQLColumn("multiplier", SQLType.DOUBLE).notNull(),
+                new SQLColumn("type", SQLType.STRING).notNull()
+                        .check("type IN ('MATERIAL', 'TOOL')")
+        );
+        String createCustomMultiplierTable = provider.getDialect().createTable("custom_multipliers", customMultiplierColumns);
+        try {
+            behavior.query(createCustomMultiplierTable);
+
+            SelectQueryBuilder selectCustomMultipliers = new SelectQueryBuilder("custom_multipliers", provider).columns("*");
+            behavior.queryMap(selectCustomMultipliers.build(), rs -> {
+                UUID uuid = UUID.fromString(rs.getString("user"));
+                MultiplierProfile mp = playerCache.computeIfAbsent(uuid, MultiplierProfile::new);
+
+                String customType = rs.getString("type");
+                switch (customType) {
+                    case "MATERIAL":
+                        mp.getCustomMaterials().put(rs.getString("context"), rs.getDouble("multiplier"));
+                        break;
+                    case "TOOL":
+                        mp.getCustomTools().put(rs.getString("context"), rs.getDouble("multiplier"));
+                        break;
+                }
+                return null;
+            });
+        } catch (ProviderException e) {
+            Locale.log("Unable to create/manage the custom multiplier table in the database: " + e.getMessage());
+        }
+    }
+
+    private void blockInit() {
+        List<SQLColumn> blockColumns = Arrays.asList(
+                new SQLColumn("w", SQLType.STRING).notNull(),
+                new SQLColumn("x", SQLType.INT).notNull(),
+                new SQLColumn("y", SQLType.INT).notNull(),
+                new SQLColumn("z", SQLType.INT).notNull(),
+                new SQLColumn("d", SQLType.DATE).notNull().defaultValue("current_date")
+        );
+        String createBlockTable = provider.getDialect().createTable("blocks", blockColumns);
+        SelectQueryBuilder selectBlocks = new SelectQueryBuilder("blocks", provider).columns("*");
+        AtomicInteger skipped = new AtomicInteger();
+
+        try {
+            behavior.query(createBlockTable);
+
+            if (plugin.getConfig().getInt("checks.storage.expiry") > 0) {
+                DeleteQueryBuilder removeStatement = new DeleteQueryBuilder("blocks", provider);
+                if (provider.getType() == StorageType.SQLITE) {
+                    removeStatement.where("d <= date('now', '-" + plugin.getConfig().getInt("checks.storage.expiry") + " day')");
+                } else {
+                    removeStatement.where("d <= now() - interval " + plugin.getConfig().getInt("checks.storage.expiry") + " day");
+                }
+                removeStatement.execute();
+            }
+
+            behavior.queryMap(selectBlocks.build(), rs -> {
+                UUID worldId = UUID.fromString(rs.getString("w"));
+                World world = Bukkit.getWorld(worldId);
+                if (world == null) {
+                    skipped.getAndIncrement();
+                }
+
+                Location location = new Location(
+                        world,
+                        rs.getInt("x"),
+                        rs.getInt("y"),
+                        rs.getInt("z")
+                );
+
+                ChunkLocation chunkLocation = new ChunkLocation(location);
+                chunkCache.computeIfAbsent(chunkLocation, __ -> new HashSet<>()).add(location);
+                rawCache.add(location);
+                return null;
+            });
+        } catch (ProviderException e) {
+            Locale.log("Unable to create/manage the block table in the database: " + e.getMessage());
+        }
+
+        Locale.log("Loaded &e" + rawCache.size() + " &rblocks from the database.");
+        if (skipped.get() > 0) {
+            Locale.log("Skipped &c" + skipped + " &rblocks due to invalid worlds.");
+        }
+    }
+
+    private void init() {
+        if (provider == null || !provider.isConnected()) return;
+
+        multiplierInit();
+        customMultiplierInit();
+        Locale.log("Loaded &e" + playerCache.size() + " &rmultiplier profiles from the database.");
+
+        // Stops early if storage persistence is disabled
+        if (!plugin.getConfig().getBoolean("checks.storage.enabled")) return;
+        blockInit();
+    }
+
+    public void refresh() {
+        if(provider.isConnected()) return;
+        connect();
+        init();
+    }
+
+    public SQLStorageProvider getStorageProvider() {
+        return provider;
     }
 
     public Set<Location> getBlockCache() {
         return blockCache;
     }
 
-    public HashMap<ChunkLocation, Set<Location>> getChunkCache() {
+    public Map<ChunkLocation, Set<Location>> getChunkCache() {
         return chunkCache;
     }
 
@@ -192,14 +241,14 @@ public class DatabaseManager {
 
     public void addChunkEntries(Chunk chunk) {
         Set<Location> locations = chunkCache.get(new ChunkLocation(chunk));
-        if(locations != null) {
+        if (locations != null) {
             blockCache.addAll(locations);
         }
     }
 
     public void removeChunkEntries(Chunk chunk) {
         Set<Location> locations = chunkCache.get(new ChunkLocation(chunk));
-        if(locations != null) {
+        if (locations != null) {
             blockCache.removeAll(locations);
         }
     }
@@ -207,7 +256,7 @@ public class DatabaseManager {
     public void addBlockEntry(Location location) {
         ChunkLocation chunkLocation = new ChunkLocation(location);
         Set<Location> locations = chunkCache.get(chunkLocation);
-        if(locations != null) {
+        if (locations != null) {
             locations.add(location);
         } else {
             Set<Location> blocks = new HashSet<>();
@@ -215,22 +264,48 @@ public class DatabaseManager {
             chunkCache.put(chunkLocation, blocks);
         }
         blockCache.add(location);
-        if(plugin.getConfig().getBoolean("checks.storage.enabled"))
-            query("INSERT INTO blocks (w,x,y,z) VALUES " + "('" + location.getWorld().getUID() + "', " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ");");
+
+        if (provider == null || !provider.isConnected()) return;
+        if (plugin.getConfig().getBoolean("checks.storage.enabled")) {
+            runAsync(() -> {
+                        try {
+                            new InsertQueryBuilder("blocks", provider)
+                                    .column("w", location.getWorld().getUID().toString())
+                                    .column("x", location.getX())
+                                    .column("y", location.getY())
+                                    .column("z", location.getZ())
+                                    .execute();
+                        } catch (ProviderException e) {
+                            Locale.log("Unable to add a block to the database. This is a bug. Report this to the developer. Error: " + e.getMessage());
+                        }
+                    }
+            );
+        }
     }
 
     public void removeBlockEntry(Location location) {
         Set<Location> locations = chunkCache.get(new ChunkLocation(location));
-        if(locations != null) {
+        if (locations != null) {
             blockCache.remove(location);
             locations.remove(location);
-            if(plugin.getConfig().getBoolean("checks.storage.enabled"))
-                query("DELETE FROM blocks WHERE " + "w='" + location.getWorld().getUID() + "' AND x=" + location.getX() + " AND y=" + location.getY() + " AND z=" + location.getZ() + ";");
+
+            if (provider == null || !provider.isConnected()) return;
+            if (plugin.getConfig().getBoolean("checks.storage.enabled")) {
+                runAsync(() -> {
+                            try {
+                                new DeleteQueryBuilder("blocks", provider)
+                                        .where("w=? AND x=? AND y=? AND z=?", location.getWorld().getUID().toString(), location.getX(), location.getY(), location.getZ())
+                                        .execute();
+                            } catch (ProviderException e) {
+                                Locale.log("Unable to remove a block from the database. This is a bug. Report this to the developer. Error: " + e.getMessage());
+                            }
+                        }
+                );
+            }
         }
     }
 
-    // Player
-    public HashMap<UUID, MultiplierProfile> getPlayerCache() {
+    public Map<UUID, MultiplierProfile> getPlayerCache() {
         return playerCache;
     }
 
@@ -245,7 +320,7 @@ public class DatabaseManager {
     }
 
     public MultiplierProfile getMultiplierProfile(UUID uuid) {
-        if(playerCache.containsKey(uuid)) {
+        if (playerCache.containsKey(uuid)) {
             return playerCache.get(uuid);
         }
         MultiplierProfile multiplierProfile = new MultiplierProfile(uuid);
@@ -253,114 +328,116 @@ public class DatabaseManager {
         return multiplierProfile;
     }
 
-    private void addMultiplier(UUID uuid, String context, String type, double multiplier) {
-        query("INSERT INTO multipliers (user,context,multiplier,type) VALUES ('" + uuid + "', '" + context + "', " + multiplier + " ,'" + type + "');");
-    }
-
     public void addBlockMultiplier(UUID uuid, Material material, double multiplier) {
-        addMultiplier(uuid, material.name(), "MATERIAL", multiplier);
+        applyMultiplierOperation(MultiplierTable.STANDARD, "add", uuid, material.name(), "MATERIAL", multiplier);
     }
 
     public void addToolMultiplier(UUID uuid, Material material, double multiplier) {
-        addMultiplier(uuid, material.name(), "TOOL", multiplier);
+        applyMultiplierOperation(MultiplierTable.STANDARD, "add", uuid, material.name(), "TOOL", multiplier);
     }
 
     public void addWorldMultiplier(UUID uuid, UUID world, double multiplier) {
-        addMultiplier(uuid, world.toString(), "WORLD", multiplier);
-    }
-
-    //
-
-    private void updateMultiplier(UUID uuid, String context, String type, double multiplier) {
-        query("UPDATE multipliers SET multiplier=" + multiplier + " WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
+        applyMultiplierOperation(MultiplierTable.STANDARD, "add", uuid, world.toString(), "WORLD", multiplier);
     }
 
     public void updateBlockMultiplier(UUID uuid, Material material, double multiplier) {
-        updateMultiplier(uuid, material.name(), "MATERIAL", multiplier);
+        applyMultiplierOperation(MultiplierTable.STANDARD, "update", uuid, material.name(), "MATERIAL", multiplier);
     }
 
     public void updateToolMultiplier(UUID uuid, Material material, double multiplier) {
-        updateMultiplier(uuid, material.name(), "TOOL", multiplier);
+        applyMultiplierOperation(MultiplierTable.STANDARD, "update", uuid, material.name(), "TOOL", multiplier);
     }
 
     public void updateWorldMultiplier(UUID uuid, UUID world, double multiplier) {
-        updateMultiplier(uuid, world.toString(), "WORLD", multiplier);
-    }
-
-    //
-
-    private void removeMultiplier(UUID uuid, String context, String type) {
-        query("DELETE FROM multipliers WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
+        applyMultiplierOperation(MultiplierTable.STANDARD, "update", uuid, world.toString(), "WORLD", multiplier);
     }
 
     public void removeBlockMultiplier(UUID uuid, Material material) {
-        removeMultiplier(uuid, material.name(), "MATERIAL");
+        applyMultiplierOperation(MultiplierTable.STANDARD, "remove", uuid, material.name(), "MATERIAL", null);
     }
 
     public void removeToolMultiplier(UUID uuid, Material material) {
-        removeMultiplier(uuid, material.name(), "TOOL");
+        applyMultiplierOperation(MultiplierTable.STANDARD, "remove", uuid, material.name(), "TOOL", null);
     }
 
     public void removeWorldMultiplier(UUID uuid, UUID world) {
-        removeMultiplier(uuid, world.toString(), "WORLD");
-    }
-
-    //
-
-    public void addCustomMultiplier(UUID uuid, String context, String type, double multiplier) {
-        query("INSERT INTO custom_multipliers (user,context,multiplier,type) VALUES ('" + uuid + "', '" + context + "', " + multiplier + " ,'" + type + "');");
+        applyMultiplierOperation(MultiplierTable.STANDARD, "remove", uuid, world.toString(), "WORLD", null);
     }
 
     public void addCustomBlockMultiplier(UUID uuid, String block, double multiplier) {
-        addCustomMultiplier(uuid, block, "MATERIAL", multiplier);
+        applyMultiplierOperation(MultiplierTable.CUSTOM, "add", uuid, block, "MATERIAL", multiplier);
     }
 
     public void addCustomToolMultiplier(UUID uuid, String tool, double multiplier) {
-        addCustomMultiplier(uuid, tool, "TOOL", multiplier);
-    }
-
-    public void updateCustomMultiplier(UUID uuid, String context, String type, double multiplier) {
-        query("UPDATE custom_multipliers SET multiplier=" + multiplier + " WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
+        applyMultiplierOperation(MultiplierTable.CUSTOM, "add", uuid, tool, "TOOL", multiplier);
     }
 
     public void updateCustomBlockMultiplier(UUID uuid, String block, double multiplier) {
-        updateCustomMultiplier(uuid, block, "MATERIAL", multiplier);
+        applyMultiplierOperation(MultiplierTable.CUSTOM, "update", uuid, block, "MATERIAL", multiplier);
     }
 
     public void updateCustomToolMultiplier(UUID uuid, String tool, double multiplier) {
-        updateCustomMultiplier(uuid, tool, "TOOL", multiplier);
-    }
-
-    public void removeCustomMultiplier(UUID uuid, String context, String type) {
-        query("DELETE FROM custom_multipliers WHERE user='" + uuid + "' AND context='" + context + "' AND type='" + type + "';");
+        applyMultiplierOperation(MultiplierTable.CUSTOM, "update", uuid, tool, "TOOL", multiplier);
     }
 
     public void removeCustomBlockMultiplier(UUID uuid, String block) {
-        removeCustomMultiplier(uuid, block, "MATERIAL");
+        applyMultiplierOperation(MultiplierTable.CUSTOM, "remove", uuid, block, "MATERIAL", null);
     }
 
     public void removeCustomToolMultiplier(UUID uuid, String tool) {
-        removeCustomMultiplier(uuid, tool, "TOOL");
+        applyMultiplierOperation(MultiplierTable.CUSTOM, "remove", uuid, tool, "TOOL", null);
     }
 
-    private void query(String sql) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+    private void runAsync(Runnable task) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, task);
+    }
+
+    private enum MultiplierTable {
+        STANDARD("multipliers"),
+        CUSTOM("custom_multipliers");
+
+        public final String name;
+        MultiplierTable(String name) {
+            this.name = name;
+        }
+    }
+
+    private void applyMultiplierOperation(
+            MultiplierTable table,
+            String operation,
+            UUID uuid,
+            String context,
+            String type,
+            Double multiplier
+    ) {
+        runAsync(() -> {
             try {
-                Statement statement = connection.createStatement();
-                statement.executeUpdate(sql);
-                statement.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
+                switch (operation) {
+                    case "add":
+                        new InsertQueryBuilder(table.name, provider)
+                                .column("user", uuid.toString())
+                                .column("context", context)
+                                .column("multiplier", multiplier)
+                                .column("type", type)
+                                .execute();
+                        break;
+                    case "update":
+                        new UpdateQueryBuilder(table.name, provider)
+                                .set("multiplier", multiplier)
+                                .where("user = ? AND context = ? AND type = ?", uuid.toString(), context, type)
+                                .execute();
+                        break;
+                    case "remove":
+                        new DeleteQueryBuilder(table.name, provider)
+                                .where("user = ? AND context = ? AND type = ?", uuid.toString(), context, type)
+                                .execute();
+                        break;
+                }
+            } catch (ProviderException e) {
+                Locale.log("Unable to " + operation + " a " + (table == MultiplierTable.STANDARD ? "" : "custom ") +
+                        "multiplier. This is a bug. Report this to the developer. Error: " + e.getMessage());
             }
         });
-    }
-
-    public void closeConnection() {
-        try {
-            connection.close();
-        } catch(SQLException e) {
-            e.printStackTrace();
-        }
     }
 
 }
